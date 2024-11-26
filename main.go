@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -448,7 +449,7 @@ type LogPanel struct {
 }
 
 func (p *LogPanel) Add(line string) {
-	p.lines = append(p.lines, line)
+	p.lines = append(p.lines, strconv.FormatInt(time.Now().UnixMilli(), 10)+": "+line)
 }
 
 func (p *LogPanel) Draw(s tcell.Screen) {
