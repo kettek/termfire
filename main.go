@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/kettek/termfire/debug"
+	"github.com/kettek/termfire/messages"
 )
 
 type Game struct {
@@ -17,7 +19,7 @@ type Game struct {
 	conn     net.Conn
 }
 
-func (g *Game) SendMessage(msg Message) error {
+func (g *Game) SendMessage(msg messages.Message) error {
 	bytes := msg.Bytes()
 	if len(bytes) > 0 {
 		g.logPanel.Add("C->S" + string(bytes))
@@ -28,246 +30,15 @@ func (g *Game) SendMessage(msg Message) error {
 	return errors.New("empty message")
 }
 
-var gMessages []Message
-
-type Message interface {
-	Bytes() []byte
-	Kind() string
-	Value() string
-	UnmarshalBinary([]byte) error
-}
-
-type MessageVersion struct {
-	CLVersion string
-	SVVersion string
-	SVName    string
-	value     string
-}
-
-func (m *MessageVersion) UnmarshalBinary(data []byte) error {
-	parts := strings.SplitN(string(data), " ", 3)
-
-	if len(parts) > 0 {
-		m.CLVersion = parts[0]
+func bytesToStringAndHex(b []byte) string {
+	result := ""
+	for _, c := range b {
+		result += string(c) + "  "
 	}
-	if len(parts) > 1 {
-		m.SVVersion = parts[1]
+	result += "\n"
+	for _, c := range b {
+		result += strconv.FormatInt(int64(c), 16) + " "
 	}
-	if len(parts) > 2 {
-		m.SVName = parts[2]
-	}
-
-	return nil
-}
-
-func (m MessageVersion) Value() string {
-	return m.CLVersion + " " + m.SVVersion + " " + m.SVName
-}
-
-func (m MessageVersion) Kind() string {
-	return "version"
-}
-
-func (m MessageVersion) Bytes() []byte {
-	var result []byte
-	result = append(result, []byte(m.Kind())...)
-	result = append(result, ' ')
-	result = append(result, []byte(m.CLVersion)...)
-	result = append(result, ' ')
-	result = append(result, []byte(m.SVVersion)...)
-	result = append(result, ' ')
-	result = append(result, []byte(m.SVName)...)
-	return result
-}
-
-type MessageFailure struct {
-	Command string
-	Reason  string
-}
-
-func (m *MessageFailure) UnmarshalBinary(data []byte) error {
-	parts := strings.SplitN(string(data), " ", 2)
-
-	if len(parts) > 0 {
-		m.Command = parts[0]
-	}
-	if len(parts) > 1 {
-		m.Reason = parts[1]
-	}
-
-	return nil
-}
-
-func (m MessageFailure) Value() string {
-	return m.Command + " " + m.Reason
-}
-
-func (m MessageFailure) Kind() string {
-	return "failure"
-}
-
-func (m MessageFailure) Bytes() []byte {
-	var result []byte
-	result = append(result, []byte(m.Kind())...)
-	result = append(result, ' ')
-	result = append(result, []byte(m.Command)...)
-	result = append(result, ' ')
-	result = append(result, []byte(m.Reason)...)
-	return result
-}
-
-type MessageSetup struct {
-	FaceCache bool
-}
-
-func (m *MessageSetup) UnmarshalBinary(data []byte) error {
-	return nil
-}
-
-func (m MessageSetup) Kind() string {
-	return "setup"
-}
-
-func (m MessageSetup) Value() string {
-	return strconv.FormatBool(m.FaceCache)
-}
-
-func (m MessageSetup) Bytes() []byte {
-	var result []byte
-	result = append(result, []byte(m.Kind())...)
-	result = append(result, ' ')
-	result = append(result, []byte("facecache")...)
-	result = append(result, ' ')
-	result = append(result, '1')
-	return result
-}
-
-type MessageAccountLogin struct {
-	Account  string
-	Password string
-}
-
-func (m *MessageAccountLogin) UnmarshalBinary(data []byte) error {
-	return nil
-}
-
-func (m MessageAccountLogin) Kind() string {
-	return "accountlogin"
-}
-
-func (m MessageAccountLogin) Value() string {
-	return m.Account + " " + m.Password
-}
-
-func (m MessageAccountLogin) Bytes() []byte {
-	var result []byte
-	result = append(result, []byte(m.Kind())...)
-	result = append(result, ' ')
-	result = append(result, []byte(LengthPrefixedString(m.Account))...)
-	result = append(result, []byte(LengthPrefixedString(m.Password))...)
-	return result
-}
-
-type Character struct {
-	Name  string
-	Level int
-}
-
-type MessageAccountPlayers struct {
-	Characters []Character
-}
-
-const (
-	ACL_NAME int = 1 << iota
-	ACL_CLASS
-	ACL_RACE
-	ACL_LEVEL
-	ACL_FACE
-	ACL_PARTY
-	ACL_MAP
-	ACL_FACE_NUM
-)
-
-func (m *MessageAccountPlayers) UnmarshalBinary(data []byte) error {
-	count := int(data[0])
-	m.Characters = make([]Character, count)
-
-	offset := 1
-	for i := 0; i < count; i++ {
-		length := int(data[offset])
-		kind := int(data[offset+1])
-		switch kind {
-		case ACL_NAME:
-			m.Characters[i].Name = string(data[offset+2 : offset+2+length])
-		case ACL_LEVEL:
-			m.Characters[i].Level = int(data[offset+2])<<8 | int(data[offset+3])
-		}
-		offset += length
-	}
-
-	return nil
-}
-
-func (m MessageAccountPlayers) Kind() string {
-	return "accountplayers"
-}
-
-func (m MessageAccountPlayers) Value() string {
-	var result string
-	for _, c := range m.Characters {
-		result += c.Name + " " + strconv.Itoa(c.Level) + "\n"
-	}
-	return result
-}
-
-func (m MessageAccountPlayers) Bytes() []byte {
-	var result []byte
-
-	result = append(result, []byte(m.Kind())...)
-
-	result = append(result, byte(len(m.Characters)))
-
-	for _, c := range m.Characters {
-		result = append(result, []byte(c.Name)...)
-		result = append(result, byte(c.Level))
-	}
-
-	return result
-}
-
-func init() {
-	gMessages = []Message{
-		&MessageFailure{},
-		&MessageVersion{},
-		&MessageAccountPlayers{},
-	}
-}
-
-func UnmarshalMessage(data []byte) (Message, error) {
-	msgLength := int(data[0])<<8 | int(data[1])
-	msgType := ""
-	for i := 2; i < msgLength; i++ {
-		if data[i] == ' ' {
-			msgType = string(data[2:i])
-			break
-		}
-	}
-	for _, m := range gMessages {
-		if m.Kind() == msgType {
-			if err := m.UnmarshalBinary(data[2+len(msgType)+1:]); err != nil {
-				return nil, err
-			} else {
-				return m, nil
-			}
-		}
-	}
-	return nil, errors.New("unknown message type")
-}
-
-func LengthPrefixedString(s string) []byte {
-	// 8-bit length followed by bytes.
-	result := []byte{byte(len(s))}
-	result = append(result, []byte(s)...)
 	return result
 }
 
@@ -298,6 +69,10 @@ func main() {
 
 	s.Clear()
 
+	if err := debug.Start(); err != nil {
+		panic(err)
+	}
+
 	var g Game
 
 	w, h := s.Size()
@@ -310,7 +85,7 @@ func main() {
 			h:         h - 1,
 			style:     defStyle,
 			fillWidth: true,
-			contents:  "ah",
+			contents:  "",
 		},
 		lines: []string{},
 	}
@@ -335,28 +110,50 @@ func main() {
 			if n, err := g.conn.Read(buf[:]); err != nil {
 				s.PostEvent(tcell.NewEventInterrupt("fail"))
 			} else {
-				g.logPanel.Add("S->C" + string(buf[:n]))
-				msg, err := UnmarshalMessage(buf[:n])
+				var offset int
+				for {
+					msgLength := int(buf[offset])<<8 | int(buf[offset+1])
+					offset += 2
+					if msgLength == 0 || offset+msgLength > n {
+						break
+					}
+					bytes := buf[offset : offset+msgLength]
+					//g.logPanel.Add("S->C" + strconv.Itoa(msgLength) + "\n" + bytesToStringAndHex(bytes))
+					msg, err := messages.UnmarshalMessage(bytes)
+					if err != nil {
+						s.PostEvent(tcell.NewEventInterrupt(err))
+					} else {
+						s.PostEvent(tcell.NewEventInterrupt(msg))
+					}
+					offset += msgLength
+					if offset >= n {
+						break
+					}
+				}
+				//g.logPanel.Add("S->C" + string(buf[:n]))
+				//g.logPanel.Add("S->C\n" + bytesToStringAndHex(buf[:n]))
+				/*msg, err := UnmarshalMessage(buf[:n])
 				if err != nil {
 					s.PostEvent(tcell.NewEventInterrupt(err.Error()))
 				} else {
 					s.PostEvent(tcell.NewEventInterrupt(msg))
-				}
+				}*/
 			}
 		}
 	}()
 
-	g.SendMessage(&MessageVersion{
+	g.SendMessage(&messages.MessageVersion{
 		CLVersion: "1023",
 		SVVersion: "1030",
 		SVName:    "termfire",
 	})
 
-	g.SendMessage(&MessageSetup{
-		FaceCache: true,
+	g.SendMessage(&messages.MessageSetup{
+		FaceCache:   true,
+		LoginMethod: "2",
 	})
 
-	g.SendMessage(&MessageAccountLogin{
+	g.SendMessage(&messages.MessageAccountLogin{
 		Account:  account,
 		Password: password,
 	})
@@ -380,18 +177,26 @@ func main() {
 		case *tcell.EventInterrupt:
 			switch t := ev.Data().(type) {
 			case []byte:
-				g.logPanel.Add("RAW " + string(t))
+				g.logPanel.Add("RAW " + string(t) + "\n")
 			case string:
-				g.logPanel.Add("STR " + t)
-			case Message:
-				g.logPanel.Add("MSG " + t.Kind() + " " + t.Value())
+				g.logPanel.Add("STR " + t + "\n")
+			case messages.Message:
+				g.logPanel.Add("MSG " + t.Kind() + " " + t.Value() + "\n")
+				g.logPanel.Add(t.Kind() + " " + t.Value() + "\n")
+				for i, c := range t.Kind() + t.Value() {
+					s.SetContent(i, 2, c, nil, defStyle)
+				}
+			case error:
+				g.logPanel.Add("ERR " + t.Error() + "\n")
+			default:
+				g.logPanel.Add("UNKNOWN\n")
 			}
 		}
 
 		for _, panel := range g.panels {
+			panel.Layout(w, h)
 			panel.Draw(s)
 		}
-
 	}
 }
 
@@ -460,7 +265,12 @@ func (p *LogPanel) Add(line string) {
 func (p *LogPanel) Draw(s tcell.Screen) {
 	p.CorePanel.contents = ""
 	for i, l := range p.lines {
-		p.CorePanel.contents += l
+		// Split string if longer than p.w
+		for len(l) > p.w {
+			p.CorePanel.contents += l[:p.w]
+			p.CorePanel.contents += "\n"
+			l = l[p.w:]
+		}
 		if i != p.h {
 			p.CorePanel.contents += "\n"
 		}
