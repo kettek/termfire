@@ -277,6 +277,11 @@ func main() {
 		os.Exit(1)
 	}
 	targetServer := os.Args[1]
+
+	if strings.Contains(targetServer, ":") == false {
+		targetServer += ":13327"
+	}
+
 	account := os.Args[2]
 	password := os.Args[3]
 
