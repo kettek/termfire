@@ -18,6 +18,9 @@ type debugServer struct {
 
 var ds debugServer
 
+var messages chan string = make(chan string, 100)
+var quit chan bool = make(chan bool)
+
 func Start() error {
 	var err error
 	ds.listener, err = net.Listen("tcp", "localhost:13327")
@@ -36,15 +39,31 @@ func Start() error {
 			}
 		}
 	}()
+	go func() {
+		for {
+			select {
+			case msg := <-messages:
+				ds.messages = append(ds.messages, msg)
+				for _, conn := range ds.connections {
+					conn.conn.Write([]byte(msg + "\n"))
+				}
+			case <-quit:
+				return
+			}
+		}
+	}()
 	return nil
 }
 
-func Debug(v ...interface{}) {
-	msg := fmt.Sprint(v...)
-	ds.messages = append(ds.messages, msg)
-	for _, conn := range ds.connections {
-		conn.conn.Write([]byte(msg + "\n"))
+func Stop() {
+	if err := ds.listener.Close(); err == nil {
+		<-quit
+		return
 	}
+}
+
+func Debug(v ...interface{}) {
+	messages <- fmt.Sprint(v...)
 }
 
 func BytesToStringAndHex(b []byte) string {
