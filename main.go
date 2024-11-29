@@ -182,7 +182,6 @@ func main() {
 				g.logPanel.Add("STR " + t + "\n")
 			case messages.Message:
 				g.logPanel.Add("MSG " + t.Kind() + " " + t.Value() + "\n")
-				g.logPanel.Add(t.Kind() + " " + t.Value() + "\n")
 				for i, c := range t.Kind() + t.Value() {
 					s.SetContent(i, 2, c, nil, defStyle)
 				}

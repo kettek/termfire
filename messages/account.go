@@ -2,8 +2,6 @@ package messages
 
 import (
 	"strconv"
-
-	"github.com/kettek/termfire/debug"
 )
 
 type MessageAccountLogin struct {
@@ -34,13 +32,13 @@ func (m MessageAccountLogin) Bytes() []byte {
 
 type Character struct {
 	Name    string
-	Level   int16
+	Level   int
 	Class   string
 	Race    string
 	Face    string
 	Party   string
 	Map     string
-	FaceNum int16
+	FaceNum int
 }
 
 type MessageAccountPlayers struct {
@@ -48,7 +46,8 @@ type MessageAccountPlayers struct {
 }
 
 const (
-	ACL_NAME int = 1 << iota
+	ACL_BLANK int = iota
+	ACL_NAME
 	ACL_CLASS
 	ACL_RACE
 	ACL_LEVEL
@@ -61,10 +60,12 @@ const (
 func (m *MessageAccountPlayers) UnmarshalBinary(data []byte) error {
 	offset := 0
 	count := int(data[offset])
+	if count == 0 {
+		m.Characters = make([]Character, 0)
+		return nil
+	}
 	offset++
 	m.Characters = make([]Character, count)
-
-	debug.Debug(debug.BytesToStringAndHex(data))
 
 	for char := 0; char < count-1; {
 		fieldLen := int(data[offset])
@@ -78,7 +79,7 @@ func (m *MessageAccountPlayers) UnmarshalBinary(data []byte) error {
 		case ACL_NAME:
 			m.Characters[char].Name = string(data[offset+1 : offset+fieldLen])
 		case ACL_LEVEL:
-			m.Characters[char].Level = int16(data[offset+1])<<8 | int16(data[offset+2])
+			m.Characters[char].Level = int(data[offset+1])<<8 + int(data[offset+2])
 		case ACL_CLASS:
 			m.Characters[char].Class = string(data[offset+1 : offset+fieldLen])
 		case ACL_FACE:
@@ -90,7 +91,7 @@ func (m *MessageAccountPlayers) UnmarshalBinary(data []byte) error {
 		case ACL_MAP:
 			m.Characters[char].Map = string(data[offset+1 : offset+fieldLen])
 		case ACL_FACE_NUM:
-			m.Characters[char].FaceNum = int16(data[offset+1])<<8 | int16(data[offset+2])
+			m.Characters[char].FaceNum = int(data[offset+1])<<8 + int(data[offset+2])
 		}
 
 		offset += fieldLen
