@@ -108,7 +108,10 @@ func (m MessageAccountPlayers) Value() string {
 	var result string
 	result += "count: " + strconv.Itoa(len(m.Characters)) + " "
 	for _, c := range m.Characters {
-		result += "\"" + c.Name + "\" " + strconv.Itoa(int(c.Level)) + " " + c.Class + c.Race + c.Face + c.Party + c.Map + strconv.Itoa(int(c.FaceNum)) + " "
+		if c.Name == "" {
+			continue
+		}
+		result += strconv.Itoa(c.Level) + " " + c.Name + " " + c.Class + " @ " + c.Map + " | " + c.Face + "(" + strconv.Itoa(c.FaceNum) + ") " + c.Party + " "
 	}
 	return result
 }
