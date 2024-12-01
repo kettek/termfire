@@ -51,6 +51,72 @@ func (m MessageStatSP) Matches(id byte) bool {
 	return id == 4
 }
 
+type MessageStatStr int16
+
+func (m *MessageStatStr) UnmarshalBinary(data []byte) (int, error) {
+	*m = (MessageStatStr)(int16(data[0])<<8 | int16(data[1]))
+	return 2, nil
+}
+
+func (m MessageStatStr) Matches(id byte) bool {
+	return id == 5
+}
+
+type MessageStatInt int16
+
+func (m *MessageStatInt) UnmarshalBinary(data []byte) (int, error) {
+	*m = (MessageStatInt)(int16(data[0])<<8 | int16(data[1]))
+	return 2, nil
+}
+
+func (m MessageStatInt) Matches(id byte) bool {
+	return id == 6
+}
+
+type MessageStatWis int16
+
+func (m *MessageStatWis) UnmarshalBinary(data []byte) (int, error) {
+	*m = (MessageStatWis)(int16(data[0])<<8 | int16(data[1]))
+	return 2, nil
+}
+
+func (m MessageStatWis) Matches(id byte) bool {
+	return id == 7
+}
+
+type MessageStatDex int16
+
+func (m *MessageStatDex) UnmarshalBinary(data []byte) (int, error) {
+	*m = (MessageStatDex)(int16(data[0])<<8 | int16(data[1]))
+	return 2, nil
+}
+
+func (m MessageStatDex) Matches(id byte) bool {
+	return id == 8
+}
+
+type MessageStatCon int16
+
+func (m *MessageStatCon) UnmarshalBinary(data []byte) (int, error) {
+	*m = (MessageStatCon)(int16(data[0])<<8 | int16(data[1]))
+	return 2, nil
+}
+
+func (m MessageStatCon) Matches(id byte) bool {
+	return id == 9
+}
+
+type MessageStatCha int16
+
+func (m *MessageStatCha) UnmarshalBinary(data []byte) (int, error) {
+	*m = (MessageStatCha)(int16(data[0])<<8 | int16(data[1]))
+	return 2, nil
+}
+
+func (m MessageStatCha) Matches(id byte) bool {
+	return id == 10
+}
+
 func init() {
 	statHP := MessageStatHP(0)
 	gMessageStats = append(gMessageStats, &statHP)
@@ -60,6 +126,18 @@ func init() {
 	gMessageStats = append(gMessageStats, &statSP)
 	statMaxSP := MessageStatMaxSP(0)
 	gMessageStats = append(gMessageStats, &statMaxSP)
+	statStr := MessageStatStr(0)
+	gMessageStats = append(gMessageStats, &statStr)
+	statInt := MessageStatInt(0)
+	gMessageStats = append(gMessageStats, &statInt)
+	statWis := MessageStatWis(0)
+	gMessageStats = append(gMessageStats, &statWis)
+	statDex := MessageStatDex(0)
+	gMessageStats = append(gMessageStats, &statDex)
+	statCon := MessageStatCon(0)
+	gMessageStats = append(gMessageStats, &statCon)
+	statCha := MessageStatCha(0)
+	gMessageStats = append(gMessageStats, &statCha)
 }
 
 type MessageStats struct {
