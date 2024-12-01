@@ -77,3 +77,11 @@ func BytesToStringAndHex(b []byte) string {
 	}
 	return result
 }
+
+func BytesToDec(b []byte) string {
+	result := ""
+	for _, c := range b {
+		result += fmt.Sprintf("%d ", c)
+	}
+	return result
+}
