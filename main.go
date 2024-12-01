@@ -121,7 +121,8 @@ func main() {
 					//g.logPanel.Add("S->C" + strconv.Itoa(msgLength) + "\n" + bytesToStringAndHex(bytes))
 					msg, err := messages.UnmarshalMessage(bytes)
 					if err != nil {
-						s.PostEvent(tcell.NewEventInterrupt(err))
+						debug.Debug("ERR: ", string(bytes))
+						s.PostEvent(tcell.NewEventInterrupt(err.Error() + " \"" + string(bytes) + "\""))
 					} else {
 						s.PostEvent(tcell.NewEventInterrupt(msg))
 					}
@@ -177,15 +178,27 @@ func main() {
 		case *tcell.EventInterrupt:
 			switch t := ev.Data().(type) {
 			case []byte:
+				debug.Debug("S->C RAW: ", t)
 				g.logPanel.Add("RAW " + string(t) + "\n")
 			case string:
+				debug.Debug("S->C STR: ", t)
 				g.logPanel.Add("STR " + t + "\n")
 			case messages.Message:
+				//debug.Debug("S->C: ", t.Kind(), t.Value())
+				debug.Debug("S->C: ", t.Kind())
 				g.logPanel.Add("MSG " + t.Kind() + " " + t.Value() + "\n")
 				for i, c := range t.Kind() + t.Value() {
 					s.SetContent(i, 2, c, nil, defStyle)
 				}
+				switch t.Kind() {
+				case "accountplayers":
+					// Just join with first for now.
+					g.SendMessage(&messages.MessageAccountPlay{
+						Character: t.(*messages.MessageAccountPlayers).Characters[0].Name,
+					})
+				}
 			case error:
+				debug.Debug("S->C ERR: ", "\""+t.Error()+"\"")
 				g.logPanel.Add("ERR " + t.Error() + "\n")
 			default:
 				g.logPanel.Add("UNKNOWN\n")
