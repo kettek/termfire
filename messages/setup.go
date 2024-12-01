@@ -12,6 +12,12 @@ func LengthPrefixedString(s string) []byte {
 	return result
 }
 
+func readLengthPrefixedString(data []byte, length int) (string, int) {
+	strlen := int(data[length])
+	length++
+	return string(data[length : length+strlen]), length + strlen
+}
+
 type MessageVersion struct {
 	CLVersion string
 	SVVersion string
