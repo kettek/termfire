@@ -44,6 +44,10 @@ func Start() error {
 			select {
 			case msg := <-messages:
 				ds.messages = append(ds.messages, msg)
+				// cap ds.messages to 200
+				if len(ds.messages) > 200 {
+					ds.messages = ds.messages[1:]
+				}
 				for _, conn := range ds.connections {
 					conn.conn.Write([]byte(msg + "\n"))
 				}
