@@ -1032,6 +1032,7 @@ type MessageStats struct {
 }
 
 func (m *MessageStats) UnmarshalBinary(data []byte) error {
+	m.Stats = make([]MessageStat, 0)
 	for i := 0; i < len(data); {
 		kind := data[i]
 		match := false
