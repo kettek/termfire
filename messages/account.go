@@ -131,7 +131,51 @@ func (m MessageAccountPlayers) Bytes() []byte {
 	return result
 }
 
+type MessageAccountPlay struct {
+	Character string
+}
+
+func (m *MessageAccountPlay) UnmarshalBinary(data []byte) error {
+	return nil
+}
+
+func (m MessageAccountPlay) Kind() string {
+	return "accountplay"
+}
+
+func (m MessageAccountPlay) Value() string {
+	return m.Character
+}
+
+func (m MessageAccountPlay) Bytes() []byte {
+	var result []byte
+	result = append(result, []byte(m.Kind())...)
+	result = append(result, ' ')
+	result = append(result, []byte(m.Character)...)
+	return result
+}
+
+type MessageAccountAddmeSuccess struct{}
+
+func (m *MessageAccountAddmeSuccess) UnmarshalBinary(data []byte) error {
+	return nil
+}
+
+func (m MessageAccountAddmeSuccess) Kind() string {
+	return "addme_success"
+}
+
+func (m MessageAccountAddmeSuccess) Value() string {
+	return ""
+}
+
+func (m MessageAccountAddmeSuccess) Bytes() []byte {
+	return nil
+}
+
 func init() {
 	gMessages = append(gMessages, &MessageAccountLogin{})
 	gMessages = append(gMessages, &MessageAccountPlayers{})
+	gMessages = append(gMessages, &MessageAccountPlay{})
+	gMessages = append(gMessages, &MessageAccountAddmeSuccess{})
 }
