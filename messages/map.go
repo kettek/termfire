@@ -1,10 +1,9 @@
 package messages
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/kettek/termfire/debug"
 )
 
 type MessageMap2CoordType uint16
@@ -33,10 +32,41 @@ type MessageMap2CoordDataImage struct {
 	Smooth       uint8
 }
 
+func (m MessageMap2CoordDataImage) String() string {
+	r := fmt.Sprintf("FaceNum: %d", m.FaceNum)
+	if m.HasAnimSpeed {
+		r += fmt.Sprintf(", AnimSpeed: %d", m.AnimSpeed)
+	}
+	if m.HasSmooth {
+		r += fmt.Sprintf(", Smooth: %d", m.Smooth)
+	}
+	return r
+}
+
 type MessageMapCoord struct {
 	X, Y uint16
 	Type MessageMap2CoordType
 	Data []MessageMap2CoordData
+}
+
+func (m MessageMapCoord) String() string {
+	r := fmt.Sprintf("X: %d, Y: %d, ", m.X, m.Y)
+	if m.Type == MessageMap2CoordTypeNormal {
+		r += "Normal"
+	} else {
+		r += "ScrollInformation"
+	}
+	for _, d := range m.Data {
+		switch d.(type) {
+		case *MessageMap2CoordDataClear:
+			r += ", Clear"
+		case *MessageMap2CoordDataDarkness:
+			r += fmt.Sprintf(", Darkness: %d", d.(*MessageMap2CoordDataDarkness).Darkness)
+		case *MessageMap2CoordDataImage:
+			r += fmt.Sprintf(", Image: [%s]", d.(*MessageMap2CoordDataImage))
+		}
+	}
+	return r
 }
 
 func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
@@ -44,9 +74,9 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 	var coord uint16
 	coord = uint16(data[offset])<<8 | uint16(data[offset+1])
 	// X is the first 6 bits.
-	m.X = uint16(coord >> 10)
+	m.X = coord >> 10
 	// Y is the next 6 bits after X.
-	m.Y = uint16(coord & 0x3F)
+	m.Y = (coord >> 4) & 0x3F
 	// Type is LSB 0-3
 	m.Type = MessageMap2CoordType(coord & 0x3)
 	offset += 2
@@ -56,9 +86,11 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 		lenType = data[offset]
 
 		// len is the top 3 bits.
-		dataLen := int(lenType >> 5)
+		var dataLen int
+		dataLen = int(lenType) >> 5
 		// type is the bottom 5 bits.
-		dataType := lenType & 0x1F
+		var dataType int
+		dataType = int(lenType) & 0x1F
 
 		switch dataType {
 		case 0x0:
@@ -67,6 +99,8 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 			var darkness MessageMap2CoordDataDarkness
 			darkness.Darkness = data[offset+1]
 			m.Data = append(m.Data, &darkness)
+		case 0x2: // label SC 1030
+			//debug.Debug("label TBD", string(data[offset+1:offset+1+int(dataLen)]))
 		default:
 			// FIXME: 99% this is wrong.
 			if dataType >= 0x10 && dataType <= 0x19 {
@@ -92,8 +126,9 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 				}
 				m.Data = append(m.Data, &image)
 			}
-			offset += dataLen
+			offset += int(dataLen)
 		}
+		offset++
 	}
 
 	return offset, nil
@@ -104,17 +139,18 @@ type MessageMap2 struct {
 }
 
 func (m *MessageMap2) UnmarshalBinary(data []byte) error {
-	for i := 0; i < len(data); i++ {
+	m.Coords = make([]MessageMapCoord, 0)
+	for i := 0; i < len(data); {
 		var mapCoord MessageMapCoord
 
 		if count, err := mapCoord.UnmarshalBinary(data[i:]); err != nil {
 			return err
 		} else {
+			m.Coords = append(m.Coords, mapCoord)
 			i += count
 		}
-
+		i++
 	}
-	debug.Debug("FUCK", m.Coords)
 	return nil
 }
 
@@ -123,7 +159,7 @@ func (m MessageMap2) Kind() string {
 }
 
 func (m MessageMap2) Value() string {
-	return "TODO"
+	return fmt.Sprintf("%+v", m.Coords)
 }
 
 func (m MessageMap2) Bytes() []byte {
