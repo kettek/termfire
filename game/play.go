@@ -224,6 +224,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 	flex.AddItem(right, 0, 1, false)
 
 	p.messages.view = tview.NewTextView()
+	p.messages.view.SetScrollable(true)
 	right.AddItem(p.messages.view, 0, 1, false)
 
 	p.mapp.view = tview.NewBox()
@@ -336,6 +337,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 		m := msg.(*messages.MessageDrawExtInfo)
 		txt := p.messages.view.GetText(false)
 		p.messages.view.SetText(txt + "\n" + m.Message)
+		p.messages.view.ScrollToEnd()
 		game.Redraw()
 	})
 
