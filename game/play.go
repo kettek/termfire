@@ -95,8 +95,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 	middle.SetTitle("middle")
 	middle.SetDirection(tview.FlexRow)
 	right := tview.NewFlex()
-	right.SetBorder(true)
-	right.SetTitle("right")
+	right.SetBorder(false)
 	right.SetDirection(tview.FlexRow)
 
 	flex.AddItem(left, 0, 1, false)
@@ -298,31 +297,23 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 			if len(m.Data) == 0 {
 				// I think this is a "you are here" type message???
-				if m.X == 5 && m.Y == 5 {
-					p.mapp.SetCell(m.X, m.Y, play.MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack)
+				if m.X == p.mapp.CenterX() && m.Y == p.mapp.CenterY() {
+					//p.mapp.SetCell(m.X, m.Y, play.MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack)
 				}
 				continue
 			}
 			for _, c := range m.Data {
 				switch d := c.(type) {
 				case *messages.MessageMap2CoordDataClear:
-					p.mapp.SetCell(m.X, m.Y, ' ', tcell.ColorBlack, tcell.ColorBlack)
+					p.mapp.ClearCell(m.X, m.Y)
 				case *messages.MessageMap2CoordDataImage:
 					t, ok := play.FaceToRuneMap[d.FaceNum]
 					if !ok {
 						t = play.MapTile{'?', tcell.ColorWhite, tcell.ColorBlack}
 					}
-					found := false
-					for i, change := range setChanges {
-						if change.x == m.X && change.y == m.Y {
-							found = true
-							if change.layer <= int(d.Layer) {
-								setChanges[i].t = t
-								break
-							}
-						}
-					}
-					if !found {
+					if d.FaceNum == 0 {
+						p.mapp.RemoveCellLayer(m.X, m.Y, int(d.Layer))
+					} else {
 						setChanges = append(setChanges, struct {
 							x, y  int
 							t     play.MapTile
@@ -333,7 +324,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			}
 		}
 		for _, change := range setChanges {
-			p.mapp.SetCell(change.x, change.y, change.t.R, change.t.F, change.t.B)
+			p.mapp.SetCell(change.x, change.y, change.layer, change.t.R, change.t.F, change.t.B)
 		}
 
 		game.Redraw()

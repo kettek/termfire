@@ -109,6 +109,7 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 			// FIXME: 99% this is wrong.
 			if dataType >= 0x10 && dataType <= 0x19 {
 				var image MessageMap2CoordDataImage
+				image.Layer = dataType - 0x10
 				if dataLen == 2 {
 					image.FaceNum = uint16(data[offset])<<8 | uint16(data[offset+1])
 				} else if dataLen == 3 {

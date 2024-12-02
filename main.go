@@ -135,6 +135,7 @@ func main() {
 	g.pages = tview.NewPages()
 
 	g.app = tview.NewApplication()
+	g.app.EnableMouse(true)
 	g.app.SetRoot(g.pages, true)
 	g.app.SetFocus(g.pages)
 

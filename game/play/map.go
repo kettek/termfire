@@ -33,12 +33,53 @@ const (
 	MapLight              = '☼'
 	MapPond               = '≈'
 	MapFountain           = '⌂'
-	MapSign               = '☺'
+	MapSign               = '¥'
 	MapStatue             = '☻'
 	MapWell               = 'O'
 	MapEmpty              = ' '
 	MapClock              = '♦'
+	MapHills              = '∆'
 )
+
+type MapTiles []MapTile
+
+func (t *MapTiles) SetCell(layer int, r MapRune, fg tcell.Color, bg tcell.Color) {
+	if layer >= len(*t) {
+		*t = append(*t, MapTile{})
+	}
+	for len(*t) <= layer {
+		*t = append(*t, MapTile{})
+	}
+	(*t)[layer] = MapTile{r, fg, bg}
+}
+
+func (t *MapTiles) RemoveLayer(layer int) {
+	if layer >= len(*t) {
+		return
+	}
+	*t = append((*t)[:layer], (*t)[layer+1:]...)
+}
+
+func (t *MapTiles) GetCell(layer int) MapTile {
+	if layer >= len(*t) || layer < 0 {
+		return MapTile{}
+	}
+	return (*t)[layer]
+}
+
+func (t *MapTiles) GetTopCell() MapTile {
+	// Get it if the rune is non-zero
+	for i := len(*t) - 1; i >= 0; i-- {
+		if (*t)[i].R != 0 {
+			return (*t)[i]
+		}
+	}
+	return t.GetCell(len(*t) - 1)
+}
+
+func (t *MapTiles) GetBottomCell() MapTile {
+	return t.GetCell(0)
+}
 
 type MapTile struct {
 	R MapRune
@@ -49,12 +90,12 @@ type MapTile struct {
 var NameToMapTile = map[string]MapTile{
 	"wall":      {MapRuneWall, tcell.ColorWhite, tcell.ColorBlack},
 	"window":    {MapRuneWindow, tcell.ColorWhite, tcell.ColorBlack},
-	"floor":     {MapRuneDirt, tcell.ColorWhite, tcell.ColorBlack},
-	"stones":    {MapRuneStones, tcell.ColorGray, tcell.ColorBlack},
+	"floor":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
+	"stones":    {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
 	"dirt":      {MapRuneDirt, tcell.ColorBrown, tcell.ColorBlack},
-	"grass":     {MapRuneDirt, tcell.ColorGreen, tcell.ColorBlack},
-	"ground":    {MapRuneDirt, tcell.ColorWhite, tcell.ColorBlack},
-	"cobble":    {MapRuneDirt, tcell.ColorGray, tcell.ColorBlack},
+	"grass":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorGreen},
+	"ground":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
+	"cobble":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorGray},
 	"door":      {MapRuneDoor, tcell.ColorWhite, tcell.ColorBlack},
 	"gate":      {MapRuneGate, tcell.ColorGray, tcell.ColorBlack},
 	"water":     {MapRuneWater, tcell.ColorBlue, tcell.ColorBlack},
@@ -80,6 +121,7 @@ var NameToMapTile = map[string]MapTile{
 	"shrine":    {MapHouse, tcell.ColorBlue, tcell.ColorBlack},
 	"church":    {MapHouse, tcell.ColorBlue, tcell.ColorBlack},
 	"inn":       {MapHouse, tcell.ColorBeige, tcell.ColorBlack},
+	"zoo":       {MapHouse, tcell.ColorWhite, tcell.ColorBlack},
 	"shrub":     {MapPlant, tcell.ColorGreen, tcell.ColorBlack},
 	"brush":     {MapPlant, tcell.ColorGreen, tcell.ColorBlack},
 	"tree":      {MapTree, tcell.ColorGreen, tcell.ColorBlack},
@@ -95,6 +137,7 @@ var NameToMapTile = map[string]MapTile{
 	"woods":     {MapTree, tcell.ColorGreen, tcell.ColorBlack},
 	"empty":     {MapEmpty, tcell.ColorBlack, tcell.ColorBlack},
 	"clock":     {MapClock, tcell.ColorWhite, tcell.ColorBlack},
+	"hills":     {MapHills, tcell.ColorGreen, tcell.ColorBlack},
 }
 
 func NameToTile(name string) MapTile {
@@ -109,9 +152,13 @@ func NameToTile(name string) MapTile {
 
 var FaceToRuneMap = map[uint16]MapTile{}
 
+func ResetFaceToRuneMap() {
+	FaceToRuneMap = map[uint16]MapTile{}
+}
+
 type Map struct {
 	View       *tview.Box
-	cells      [][]MapTile // TODO: Make resizeable.
+	cells      [][]MapTiles // TODO: Make resizeable.
 	width      int
 	height     int
 	viewWidth  int
@@ -121,6 +168,14 @@ type Map struct {
 
 func (m *Map) SetOnResize(onResize func(width, height int)) {
 	m.onResize = onResize
+}
+
+func (m *Map) CenterX() int {
+	return m.width / 2
+}
+
+func (m *Map) CenterY() int {
+	return m.height / 2
 }
 
 func (m *Map) Init() {
@@ -145,7 +200,13 @@ func (m *Map) Init() {
 
 		for my := 0; my < m.height; my++ {
 			for mx := 0; mx < m.width; mx++ {
-				r, fg, bg := m.cells[my][mx].R, m.cells[my][mx].F, m.cells[my][mx].B
+				top := m.cells[my][mx].GetTopCell()
+				bot := m.cells[my][mx].GetBottomCell()
+
+				r := top.R
+				fg := top.F
+				bg := bot.B
+
 				screen.SetContent(x+mx+1, y+my+1, rune(r), nil, tcell.StyleDefault.Foreground(fg).Background(bg))
 			}
 		}
@@ -156,24 +217,27 @@ func (m *Map) Init() {
 func (m *Map) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-	m.cells = make([][]MapTile, m.height)
+	m.cells = make([][]MapTiles, m.height)
 	for y := 0; y < m.height; y++ {
-		m.cells[y] = make([]MapTile, m.width)
+		m.cells[y] = make([]MapTiles, m.width)
+		for x := 0; x < m.width; x++ {
+			m.cells[y][x] = MapTiles{}
+		}
 	}
 }
 
 func (m *Map) Clear() {
 	for y := 0; y < len(m.cells); y++ {
 		for x := 0; x < len(m.cells[y]); x++ {
-			m.cells[y][x] = MapTile{' ', tcell.ColorWhite, tcell.ColorBlack}
+			m.cells[y][x] = MapTiles{}
 		}
 	}
 }
 
 func (m *Map) Shift(dx, dy int) {
-	newCells := make([][]MapTile, m.height)
+	newCells := make([][]MapTiles, m.height)
 	for y := 0; y < m.height; y++ {
-		newCells[y] = make([]MapTile, m.width)
+		newCells[y] = make([]MapTiles, m.width)
 	}
 
 	for y := 0; y < m.height; y++ {
@@ -189,12 +253,42 @@ func (m *Map) Shift(dx, dy int) {
 	m.cells = newCells
 }
 
-func (m *Map) SetCell(x, y int, r MapRune, fg tcell.Color, bg tcell.Color) {
+func (m *Map) SetCell(x, y int, layer int, r MapRune, fg tcell.Color, bg tcell.Color) {
 	if x < 0 || y < 0 {
 		return
 	}
 	if x >= m.width || y >= m.height {
 		return
 	}
-	m.cells[y][x] = MapTile{r, fg, bg}
+	m.cells[y][x].SetCell(layer, r, fg, bg)
+}
+
+func (m *Map) ClearCell(x, y int) {
+	if x < 0 || y < 0 {
+		return
+	}
+	if x >= m.width || y >= m.height {
+		return
+	}
+	m.cells[y][x] = MapTiles{}
+}
+
+func (m *Map) RemoveCellLayer(x, y, layer int) {
+	if x < 0 || y < 0 {
+		return
+	}
+	if x >= m.width || y >= m.height {
+		return
+	}
+	m.cells[y][x].RemoveLayer(layer)
+}
+
+func (m *Map) GetCell(x, y int) MapTiles {
+	if x < 0 || y < 0 {
+		return MapTiles{}
+	}
+	if x >= m.width || y >= m.height {
+		return MapTiles{}
+	}
+	return m.cells[y][x]
 }

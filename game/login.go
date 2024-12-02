@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/kettek/termfire/debug"
+	"github.com/kettek/termfire/game/play"
 	"github.com/kettek/termfire/messages"
 	"github.com/rivo/tview"
 )
@@ -17,6 +18,9 @@ func (l *Login) Init(game Game) (tidy func()) {
 
 	account := os.Args[2]
 	password := os.Args[3]
+
+	// Clear out our face cache.
+	play.ResetFaceToRuneMap()
 
 	l.Once(&messages.MessageVersion{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageVersion)
@@ -40,6 +44,14 @@ func (l *Login) Init(game Game) (tidy func()) {
 				Use   bool
 				Value bool
 			}{Use: true, Value: true},
+		})
+
+		// We need to add any messages here to our face to rune map cache, as otherwise they'll be lost to the void.
+		l.On(&messages.MessageFace2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
+			m := msg.(*messages.MessageFace2)
+			r := play.NameToTile(m.Name)
+			play.FaceToRuneMap[uint16(m.Num)] = r
+			debug.Debug("face2!", msg.Value())
 		})
 
 		l.Once(&messages.MessageSetup{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
