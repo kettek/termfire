@@ -33,7 +33,7 @@ const (
 	MapLight              = '☼'
 	MapPond               = '≈'
 	MapFountain           = '⌂'
-	MapSign               = '¥'
+	MapSign               = '¶'
 	MapStatue             = '☻'
 	MapWell               = 'O'
 	MapEmpty              = ' '
@@ -206,6 +206,9 @@ func (m *Map) Init() {
 				r := top.R
 				fg := top.F
 				bg := bot.B
+				if top.F == bot.B {
+					bg = top.B
+				}
 
 				screen.SetContent(x+mx+1, y+my+1, rune(r), nil, tcell.StyleDefault.Foreground(fg).Background(bg))
 			}
