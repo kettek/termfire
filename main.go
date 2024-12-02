@@ -17,6 +17,24 @@ import (
 type Game struct {
 	conn  net.Conn
 	state game.State
+	app   *tview.Application
+	tidy  func()
+	pages *tview.Pages
+}
+
+func (g *Game) App() *tview.Application {
+	return g.app
+}
+
+func (g *Game) Redraw() {
+	// What the hell is this... Why can't g.app propagate children updates/changes...
+	go func() {
+		g.app.QueueUpdateDraw(func() {})
+	}()
+}
+
+func (g *Game) Pages() *tview.Pages {
+	return g.pages
 }
 
 func (g *Game) Connect(targetServer string) error {
@@ -35,13 +53,19 @@ func (g *Game) Connect(targetServer string) error {
 
 	go func() {
 		for {
-			var buf [99999]byte
+			var buf [32767]byte
 			if n, err := g.conn.Read(buf[:]); err != nil {
 				debug.Debug("Failed to read from server: ", err)
 			} else {
 				var offset int
 				for offset < n {
 					length := int(buf[offset])<<8 | int(buf[offset+1])
+
+					if offset+length > n {
+						debug.Debug("message too long: ", offset, length, n, string(buf[offset:n]))
+						return
+					}
+
 					offset += 2
 					msg := buf[offset : offset+length]
 					message, err := messages.UnmarshalMessage(msg)
@@ -49,7 +73,9 @@ func (g *Game) Connect(targetServer string) error {
 						debug.Debug("Failed to unmarshal message: ", err)
 						return
 					}
-					g.state.OnMessage(message)
+					g.app.QueueUpdate(func() {
+						g.state.OnMessage(message)
+					})
 					offset += length
 				}
 			}
@@ -63,8 +89,11 @@ func (g *Game) Log(msg string) {
 }
 
 func (g *Game) SetState(state game.State) {
+	if g.tidy != nil {
+		g.tidy()
+	}
 	g.state = state
-	state.Init(g)
+	g.tidy = state.Init(g)
 }
 
 func (g *Game) SendMessage(msg messages.Message) error {
@@ -103,17 +132,18 @@ func main() {
 
 	var g Game
 
-	box := tview.NewBox().SetBorder(true).SetTitle("Termfire")
+	g.pages = tview.NewPages()
 
-	app := tview.NewApplication()
-	app.SetRoot(box, true)
+	g.app = tview.NewApplication()
+	g.app.SetRoot(g.pages, true)
+	g.app.SetFocus(g.pages)
 
-	app.SetAfterDrawFunc(func(s tcell.Screen) {
+	g.app.SetAfterDrawFunc(func(s tcell.Screen) {
+		g.app.SetAfterDrawFunc(nil)
 		g.SetState(&game.Login{})
-		app.SetAfterDrawFunc(nil)
 	})
 
-	if err := app.Run(); err != nil {
+	if err := g.app.Run(); err != nil {
 		panic(err)
 	}
 }

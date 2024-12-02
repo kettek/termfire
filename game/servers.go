@@ -6,8 +6,9 @@ type Servers struct {
 	game Game
 }
 
-func (s *Servers) Init(game Game) {
+func (s *Servers) Init(game Game) (tidy func()) {
 	// TODO: Request Metaserver
+	return nil
 }
 
 func (s *Servers) OnMessage(msg messages.Message) {

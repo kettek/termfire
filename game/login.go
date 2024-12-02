@@ -5,17 +5,14 @@ import (
 
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/messages"
+	"github.com/rivo/tview"
 )
 
 type Login struct {
 	MessageHandler
-	game Game
 }
 
-func (l *Login) Init(game Game) {
-	debug.Debug("Init")
-	l.game = game
-
+func (l *Login) Init(game Game) (tidy func()) {
 	targetServer := os.Args[1]
 
 	account := os.Args[2]
@@ -33,24 +30,45 @@ func (l *Login) Init(game Game) {
 		game.SendMessage(&messages.MessageSetup{FaceCache: true, LoginMethod: "2", ExtendedStats: true})
 
 		l.Once(&messages.MessageSetup{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
-			game.SendMessage(&messages.MessageAccountLogin{Account: account, Password: password})
-			l.Once(&messages.MessageAccountPlayers{}, &messages.MessageAccountLogin{}, func(msg messages.Message, failure *messages.MessageFailure) {
-				if failure != nil {
-					debug.Debug("Failed to login: ", failure.Reason)
-					game.SetState(&Servers{})
-					return
-				}
-				m := msg.(*messages.MessageAccountPlayers)
-				// Just join with the first one for now! :) (Play handles actual message account play command due to how we only get a unique message if a failure happens).
-				game.SetState(&Play{character: m.Characters[0].Name})
-			})
+			form := tview.NewForm().
+				AddInputField("Server", targetServer, 0, nil, func(text string) {
+					targetServer = text
+				}).
+				AddInputField("Account", account, 0, nil, func(text string) {
+					account = text
+				}).
+				AddPasswordField("Password", password, 0, '*', func(text string) {
+					password = text
+				}).
+				AddButton("Login", func() {
+					l.TryLogin(game, account, password)
+				})
+
+			game.Pages().AddAndSwitchToPage("login", form, true)
+			game.Redraw()
 		})
 	})
 
 	if err := game.Connect(targetServer); err != nil {
 		debug.Debug("Failed to connect to server")
-		game.SetState(&Servers{})
-		return
+		game.SetState(&Login{})
 	}
+
+	return func() {
+		game.Pages().RemovePage("login")
+	}
+}
+
+func (l *Login) TryLogin(game Game, account, password string) {
+	game.SendMessage(&messages.MessageAccountLogin{Account: account, Password: password})
+	l.Once(&messages.MessageAccountPlayers{}, &messages.MessageAccountLogin{}, func(msg messages.Message, failure *messages.MessageFailure) {
+		if failure != nil {
+			debug.Debug("Failed to login: ", failure.Reason)
+			return
+		}
+		m := msg.(*messages.MessageAccountPlayers)
+		// Just join with the first one for now! :) (Play handles actual message account play command due to how we only get a unique message if a failure happens).
+		game.SetState(&Play{character: m.Characters[0].Name})
+	})
 
 }

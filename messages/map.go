@@ -43,7 +43,7 @@ func (m MessageMap2CoordDataImage) String() string {
 }
 
 type MessageMapCoord struct {
-	X, Y uint16
+	X, Y int
 	Type MessageMap2CoordType
 	Data []MessageMap2CoordData
 }
@@ -70,12 +70,12 @@ func (m MessageMapCoord) String() string {
 
 func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 	var offset int
-	var coord uint16
-	coord = uint16(data[offset])<<8 | uint16(data[offset+1])
+	var coord int16
+	coord = int16(data[offset])<<8 | int16(data[offset+1])
 	// X is the first 6 bits.
-	m.X = coord >> 10
+	m.X = (int((coord) >> 10 & 0x3F)) - 15
 	// Y is the next 6 bits after X.
-	m.Y = (coord >> 4) & 0x3F
+	m.Y = (int((coord) >> 4 & 0x3F)) - 15
 	// Type is LSB 0-3
 	m.Type = MessageMap2CoordType(coord & 0x3)
 	offset += 2
@@ -83,51 +83,55 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 	for offset < len(data) {
 		var lenType uint8
 		lenType = data[offset]
+		offset++
+
+		if lenType == 255 {
+			break
+		}
 
 		// len is the top 3 bits.
-		var dataLen int
-		dataLen = int(lenType) >> 5
+		var dataLen uint8
+		dataLen = lenType >> 5
 		// type is the bottom 5 bits.
-		var dataType int
-		dataType = int(lenType) & 0x1F
+		var dataType uint8
+		dataType = lenType & 0x1F
 
 		switch dataType {
 		case 0x0:
 			m.Data = append(m.Data, &MessageMap2CoordDataClear{})
 		case 0x1:
 			var darkness MessageMap2CoordDataDarkness
-			darkness.Darkness = data[offset+1]
+			darkness.Darkness = data[offset]
 			m.Data = append(m.Data, &darkness)
 		case 0x2: // label SC 1030
-			//debug.Debug("label TBD", string(data[offset+1:offset+1+int(dataLen)]))
+		// TODO
 		default:
 			// FIXME: 99% this is wrong.
 			if dataType >= 0x10 && dataType <= 0x19 {
 				var image MessageMap2CoordDataImage
 				if dataLen == 2 {
-					image.FaceNum = uint16(data[offset+1])<<8 | uint16(data[offset+2])
+					image.FaceNum = uint16(data[offset])<<8 | uint16(data[offset+1])
 				} else if dataLen == 3 {
-					image.FaceNum = uint16(data[offset+1])<<8 | uint16(data[offset+2])
+					image.FaceNum = uint16(data[offset])<<8 | uint16(data[offset+1])
 					// If facenum's high bit is set, it has an animation.
 					if image.FaceNum&0x8000 != 0 {
-						image.AnimSpeed = uint8(data[offset+3])
+						image.AnimSpeed = uint8(data[offset+2])
 						image.HasAnimSpeed = true
 					} else {
-						image.Smooth = uint8(data[offset+3])
+						image.Smooth = uint8(data[offset+2])
 						image.HasSmooth = true
 					}
 				} else if dataLen == 4 {
-					image.FaceNum = uint16(data[offset+1])<<8 | uint16(data[offset+2])
-					image.AnimSpeed = uint8(data[offset+3])
-					image.Smooth = uint8(data[offset+4])
+					image.FaceNum = uint16(data[offset])<<8 | uint16(data[offset+1])
+					image.AnimSpeed = uint8(data[offset+2])
+					image.Smooth = uint8(data[offset+3])
 					image.HasAnimSpeed = true
 					image.HasSmooth = true
 				}
 				m.Data = append(m.Data, &image)
 			}
-			offset += int(dataLen)
 		}
-		offset++
+		offset += int(dataLen)
 	}
 
 	return offset, nil
@@ -148,7 +152,6 @@ func (m *MessageMap2) UnmarshalBinary(data []byte) error {
 			m.Coords = append(m.Coords, mapCoord)
 			i += count
 		}
-		i++
 	}
 	return nil
 }
@@ -158,7 +161,11 @@ func (m MessageMap2) Kind() string {
 }
 
 func (m MessageMap2) Value() string {
-	return fmt.Sprintf("%+v", m.Coords)
+	r := ""
+	for _, c := range m.Coords {
+		r += c.String() + "\n"
+	}
+	return r
 }
 
 func (m MessageMap2) Bytes() []byte {
