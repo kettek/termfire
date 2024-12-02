@@ -222,7 +222,13 @@ func (m *Map) Init() {
 					bg = top.B
 				}
 
-				screen.SetContent(x+mx+1, y+my+1, rune(r), nil, tcell.StyleDefault.Foreground(fg).Background(bg))
+				style := tcell.StyleDefault
+
+				if mx == m.CenterX() && my == m.CenterY() {
+					style = style.Blink(true).Bold(true).Underline(true)
+				}
+
+				screen.SetContent(x+mx+1, y+my+1, rune(r), nil, style.Foreground(fg).Background(bg))
 			}
 		}
 		return x, y, width, height
