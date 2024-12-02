@@ -39,6 +39,8 @@ type Play struct {
 	character string
 	playerTag uint32
 	inventory Inventory
+	ground    Inventory
+	status    *tview.TextView
 	input     *tview.InputField
 	mapp      play.Map
 	messages  Messages
@@ -88,9 +90,13 @@ func (p *Play) Init(game Game) (tidy func()) {
 	})
 
 	left := tview.NewFlex()
-	left.SetBorder(true)
-	left.SetTitle("left")
 	left.SetDirection(tview.FlexRow)
+
+	p.status = tview.NewTextView()
+	p.status.SetBorder(true)
+	p.status.SetTitle("Status")
+	left.AddItem(p.status, 0, 2, false)
+
 	middle := tview.NewFlex()
 	middle.SetBorder(false)
 	middle.SetTitle("middle")
@@ -102,6 +108,12 @@ func (p *Play) Init(game Game) (tidy func()) {
 	flex.AddItem(left, 0, 1, false)
 	flex.AddItem(middle, 0, 2, false)
 	flex.AddItem(right, 0, 1, false)
+
+	p.ground.ListView = tview.NewList()
+	p.ground.ListView.SetTitle("Ground")
+	p.ground.ListView.SetBorder(true)
+	p.ground.ListView.ShowSecondaryText(false)
+	left.AddItem(p.ground.ListView, 0, 1, false)
 
 	p.messages.view = tview.NewTextView()
 	p.messages.view.SetScrollable(true)
@@ -263,7 +275,14 @@ func (p *Play) Init(game Game) (tidy func()) {
 	p.On(&messages.MessageItem2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageItem2)
 		if m.Location == 0 {
-			debug.Debug("ground items: ", m.Objects)
+			p.ground.Clear()
+			for _, item := range m.Objects {
+				name := item.Name
+				if item.Nrof > 1 {
+					name = strconv.Itoa(int(item.Nrof)) + " " + item.PluralName
+				}
+				p.ground.AddItem(name)
+			}
 		} else {
 			if m.Location == p.playerTag {
 				for _, item := range m.Objects {
@@ -361,7 +380,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 	p.On(&messages.MessagePlayer{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessagePlayer)
 		p.playerTag = m.Tag
-		left.SetTitle(m.Name)
+		p.status.SetTitle(m.Name)
 		game.Redraw()
 		debug.Debug("player!", msg.Value())
 	})

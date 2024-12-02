@@ -92,6 +92,7 @@ var NameToMapTile = map[string]MapTile{
 	"window":    {MapRuneWindow, tcell.ColorWhite, tcell.ColorBlack},
 	"floor":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
 	"stones":    {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
+	"stone":     {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
 	"dirt":      {MapRuneDirt, tcell.ColorBrown, tcell.ColorBlack},
 	"grass":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorGreen},
 	"ground":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
