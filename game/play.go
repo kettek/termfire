@@ -37,6 +37,7 @@ type Play struct {
 	character string
 	playerTag uint32
 	inventory Inventory
+	input     *tview.InputField
 	mapp      play.Map
 	messages  Messages
 	topPacket uint16
@@ -106,7 +107,24 @@ func (p *Play) Init(game Game) (tidy func()) {
 	p.messages.view.SetDynamicColors(true)
 	p.messages.view.SetWrap(true)
 	p.messages.view.SetWordWrap(true)
+
+	p.input = tview.NewInputField()
+	p.input.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEnter {
+			msg := &messages.MessageCommand{Command: p.input.GetText()}
+			msg.Packet = p.topPacket
+			msg.Repeat = 1
+			p.topPacket++
+			game.SendMessage(msg)
+			p.input.SetText("")
+		} else if key == tcell.KeyEsc {
+			p.input.SetText("")
+		}
+		game.Pages().SwitchToPage("play")
+	})
+
 	right.AddItem(p.messages.view, 0, 1, false)
+	right.AddItem(p.input, 1, 1, false)
 
 	p.mapp.Init()
 	p.mapp.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -122,6 +140,13 @@ func (p *Play) Init(game Game) (tidy func()) {
 		} else if event.Key() == tcell.KeyRune {
 			if event.Rune() == 'a' {
 				msg = &messages.MessageCommand{Command: "apply"}
+			} else if event.Rune() == '\'' {
+				game.App().SetFocus(p.input)
+			} else if event.Rune() == 'i' {
+				if pg, _ := game.Pages().GetFrontPage(); pg != "inventory" {
+					game.Pages().SwitchToPage("inventory")
+					game.App().SetFocus(p.inventory.ListView)
+				}
 			}
 		}
 		if msg != nil {
@@ -169,15 +194,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 	game.Pages().AddPage("inventory", inventory, true, true)
 
 	game.Pages().SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyRune {
-			switch event.Rune() {
-			case 'i':
-				if pg, _ := game.Pages().GetFrontPage(); pg != "inventory" {
-					game.Pages().SwitchToPage("inventory")
-					game.App().SetFocus(p.inventory.ListView)
-				}
-			}
-		} else if event.Key() == tcell.KeyEsc {
+		if event.Key() == tcell.KeyEsc {
 			game.Pages().SwitchToPage("play")
 		}
 		return event
