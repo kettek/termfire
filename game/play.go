@@ -3,10 +3,10 @@ package game
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/kettek/termfire/debug"
+	"github.com/kettek/termfire/game/play"
 	"github.com/kettek/termfire/messages"
 	"github.com/rivo/tview"
 )
@@ -27,145 +27,6 @@ var cfToW3CColor = map[messages.MessageColor]tcell.Color{
 	messages.MessageColorTan:        tcell.ColorTan,
 }
 
-type mapRune rune
-
-const (
-	mapRuneWall   mapRune = '█'
-	mapRuneWindow         = '▓'
-	mapRuneStones         = '·'
-	mapRuneDirt           = '░'
-	mapRuneDoor           = '+'
-	mapRuneGate           = '‡'
-	mapRuneWater          = '~'
-	mapRunePlayer         = '@'
-	mapRuneCoin           = '¢'
-	mapRuneBed            = '&'
-	mapRuneTable          = 'T'
-	mapRuneChair          = 'h'
-	mapRuneScroll         = '!'
-	mapRuneLever          = '/'
-	mapHouse              = '#'
-	mapShop               = '#'
-	mapTower              = '#'
-	mapPlant              = '♣'
-	mapTree               = '♠'
-	mapLight              = '☼'
-	mapPond               = '≈'
-	mapFountain           = '⌂'
-	mapSign               = '☺'
-	mapStatue             = '☻'
-	mapWell               = 'O'
-	mapEmpty              = ' '
-	mapClock              = '♦'
-)
-
-type mapTile struct {
-	r mapRune
-	f tcell.Color
-	b tcell.Color
-}
-
-var nameToMapTile = map[string]mapTile{
-	"wall":      {mapRuneWall, tcell.ColorWhite, tcell.ColorBlack},
-	"window":    {mapRuneWindow, tcell.ColorWhite, tcell.ColorBlack},
-	"floor":     {mapRuneDirt, tcell.ColorWhite, tcell.ColorBlack},
-	"stones":    {mapRuneStones, tcell.ColorGray, tcell.ColorBlack},
-	"dirt":      {mapRuneDirt, tcell.ColorBrown, tcell.ColorBlack},
-	"grass":     {mapRuneDirt, tcell.ColorGreen, tcell.ColorBlack},
-	"ground":    {mapRuneDirt, tcell.ColorWhite, tcell.ColorBlack},
-	"cobble":    {mapRuneDirt, tcell.ColorGray, tcell.ColorBlack},
-	"door":      {mapRuneDoor, tcell.ColorWhite, tcell.ColorBlack},
-	"gate":      {mapRuneGate, tcell.ColorGray, tcell.ColorBlack},
-	"water":     {mapRuneWater, tcell.ColorBlue, tcell.ColorBlack},
-	"player":    {mapRunePlayer, tcell.ColorWhite, tcell.ColorBlack},
-	"coin":      {mapRuneCoin, tcell.ColorYellow, tcell.ColorBlack},
-	"bed":       {mapRuneBed, tcell.ColorRed, tcell.ColorBlack},
-	"table":     {mapRuneTable, tcell.ColorBeige, tcell.ColorBlack},
-	"chair":     {mapRuneChair, tcell.ColorBeige, tcell.ColorBlack},
-	"scroll":    {mapRuneScroll, tcell.ColorWhite, tcell.ColorBlack},
-	"card":      {mapRuneScroll, tcell.ColorWhite, tcell.ColorBlack},
-	"book":      {mapRuneScroll, tcell.ColorWhite, tcell.ColorBlack},
-	"lever":     {mapRuneLever, tcell.ColorGray, tcell.ColorBlack},
-	"house":     {mapHouse, tcell.ColorBlack, tcell.ColorWhite},
-	"barrack":   {mapHouse, tcell.ColorBrown, tcell.ColorWhite},
-	"tavern":    {mapHouse, tcell.ColorBeige, tcell.ColorWhite},
-	"guild":     {mapHouse, tcell.ColorDarkGray, tcell.ColorWhite},
-	"fort":      {mapHouse, tcell.ColorBlack, tcell.ColorWhite},
-	"tower":     {mapTower, tcell.ColorBlack, tcell.ColorWhite},
-	"shop":      {mapShop, tcell.ColorBlack, tcell.ColorYellow},
-	"store":     {mapShop, tcell.ColorBlack, tcell.ColorYellow},
-	"market":    {mapShop, tcell.ColorBlack, tcell.ColorYellow},
-	"bank":      {mapShop, tcell.ColorBlack, tcell.ColorYellow},
-	"shrine":    {mapHouse, tcell.ColorBlue, tcell.ColorBlack},
-	"church":    {mapHouse, tcell.ColorBlue, tcell.ColorBlack},
-	"inn":       {mapHouse, tcell.ColorBeige, tcell.ColorBlack},
-	"shrub":     {mapPlant, tcell.ColorGreen, tcell.ColorBlack},
-	"brush":     {mapPlant, tcell.ColorGreen, tcell.ColorBlack},
-	"tree":      {mapTree, tcell.ColorGreen, tcell.ColorBlack},
-	"lamp":      {mapLight, tcell.ColorYellow, tcell.ColorBlack},
-	"pond":      {mapPond, tcell.ColorBlue, tcell.ColorBlack},
-	"lake":      {mapPond, tcell.ColorBlue, tcell.ColorBlack},
-	"grasspond": {mapPond, tcell.ColorBlue, tcell.ColorGreen},
-	"fountain":  {mapFountain, tcell.ColorBlue, tcell.ColorBlack},
-	"sign":      {mapSign, tcell.ColorWhite, tcell.ColorBlack},
-	"crossroad": {mapSign, tcell.ColorWhite, tcell.ColorBlack},
-	"statue":    {mapStatue, tcell.ColorWhite, tcell.ColorBlack},
-	"well":      {mapWell, tcell.ColorBlue, tcell.ColorBlack},
-	"woods":     {mapTree, tcell.ColorGreen, tcell.ColorBlack},
-	"empty":     {mapEmpty, tcell.ColorBlack, tcell.ColorBlack},
-	"clock":     {mapClock, tcell.ColorWhite, tcell.ColorBlack},
-}
-
-func nameToTile(name string) mapTile {
-	for k, v := range nameToMapTile {
-		if strings.Contains(name, k) {
-			return v
-		}
-	}
-	debug.Debug("missing image: ", name)
-	return mapTile{mapRune(name[0]), tcell.ColorWhite, tcell.ColorBlack}
-}
-
-var faceToRuneMap = map[uint16]mapTile{}
-
-type Map struct {
-	view  *tview.Box
-	cells [11][11]mapTile // TODO: Make resizeable.
-}
-
-func (m *Map) Clear() {
-	for y := 0; y < len(m.cells); y++ {
-		for x := 0; x < len(m.cells[y]); x++ {
-			m.cells[y][x] = mapTile{' ', tcell.ColorWhite, tcell.ColorBlack}
-		}
-	}
-}
-
-func (m *Map) Shift(dx, dy int) {
-	newCells := [11][11]mapTile{}
-	for y := 0; y < 11; y++ {
-		for x := 0; x < 11; x++ {
-			newX := x + dx
-			newY := y + dy
-			if newX < 0 || newX >= 11 || newY < 0 || newY >= 11 {
-				continue
-			}
-			newCells[newY][newX] = m.cells[y][x]
-		}
-	}
-	m.cells = newCells
-}
-
-func (m *Map) SetCell(x, y int, r mapRune, fg tcell.Color, bg tcell.Color) {
-	if x < 0 || y < 0 {
-		return
-	}
-	if x >= 11 || y >= 11 {
-		return
-	}
-	m.cells[y][x] = mapTile{r, fg, bg}
-}
-
 type Messages struct {
 	view *tview.TextView
 }
@@ -176,7 +37,7 @@ type Play struct {
 	character string
 	playerTag uint32
 	inventory Inventory
-	mapp      Map
+	mapp      play.Map
 	messages  Messages
 	topPacket uint16
 }
@@ -220,7 +81,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 	flex := tview.NewFlex()
 	flex.SetDirection(tview.FlexColumn)
 	flex.SetFocusFunc(func() {
-		game.App().SetFocus(p.mapp.view)
+		game.App().SetFocus(p.mapp.View)
 	})
 
 	left := tview.NewFlex()
@@ -247,23 +108,8 @@ func (p *Play) Init(game Game) (tidy func()) {
 	p.messages.view.SetWordWrap(true)
 	right.AddItem(p.messages.view, 0, 1, false)
 
-	p.mapp.view = tview.NewBox()
-	p.mapp.view.SetBorder(true)
-	p.mapp.view.SetTitle("Map")
-	p.mapp.view.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		// offset so we render in the center.
-		x += (width - 11) / 2
-		y += (height - 11) / 2
-
-		for my := 0; my < 11; my++ {
-			for mx := 0; mx < 11; mx++ {
-				r, fg, bg := p.mapp.cells[my][mx].r, p.mapp.cells[my][mx].f, p.mapp.cells[my][mx].b
-				screen.SetContent(x+mx+1, y+my+1, rune(r), nil, tcell.StyleDefault.Foreground(fg).Background(bg))
-			}
-		}
-		return x, y, width, height
-	})
-	p.mapp.view.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	p.mapp.Init()
+	p.mapp.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		var msg *messages.MessageCommand
 		if event.Key() == tcell.KeyUp {
 			msg = &messages.MessageCommand{Command: "north"}
@@ -287,7 +133,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 		return event
 	})
 
-	middle.AddItem(p.mapp.view, 0, 1, true)
+	middle.AddItem(p.mapp.View, 0, 1, true)
 
 	inventory := tview.NewFlex()
 	inventory.SetTitle("Inventory")
@@ -345,8 +191,8 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageFace2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageFace2)
-		r := nameToTile(m.Name)
-		faceToRuneMap[uint16(m.Num)] = r
+		r := play.NameToTile(m.Name)
+		play.FaceToRuneMap[uint16(m.Num)] = r
 		debug.Debug("face2!", msg.Value())
 	})
 
@@ -405,7 +251,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 		var setChanges []struct {
 			x, y  int
-			t     mapTile
+			t     play.MapTile
 			layer int
 		}
 
@@ -417,7 +263,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			if len(m.Data) == 0 {
 				// I think this is a "you are here" type message???
 				if m.X == 5 && m.Y == 5 {
-					p.mapp.SetCell(m.X, m.Y, mapRunePlayer, tcell.ColorWhite, tcell.ColorBlack)
+					p.mapp.SetCell(m.X, m.Y, play.MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack)
 				}
 				continue
 			}
@@ -426,9 +272,9 @@ func (p *Play) Init(game Game) (tidy func()) {
 				case *messages.MessageMap2CoordDataClear:
 					p.mapp.SetCell(m.X, m.Y, ' ', tcell.ColorBlack, tcell.ColorBlack)
 				case *messages.MessageMap2CoordDataImage:
-					t, ok := faceToRuneMap[d.FaceNum]
+					t, ok := play.FaceToRuneMap[d.FaceNum]
 					if !ok {
-						t = mapTile{'?', tcell.ColorWhite, tcell.ColorBlack}
+						t = play.MapTile{'?', tcell.ColorWhite, tcell.ColorBlack}
 					}
 					found := false
 					for i, change := range setChanges {
@@ -443,7 +289,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 					if !found {
 						setChanges = append(setChanges, struct {
 							x, y  int
-							t     mapTile
+							t     play.MapTile
 							layer int
 						}{m.X, m.Y, t, int(d.Layer)})
 					}
@@ -451,7 +297,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			}
 		}
 		for _, change := range setChanges {
-			p.mapp.SetCell(change.x, change.y, change.t.r, change.t.f, change.t.b)
+			p.mapp.SetCell(change.x, change.y, change.t.R, change.t.F, change.t.B)
 		}
 
 		game.Redraw()
