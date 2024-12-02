@@ -98,8 +98,9 @@ func (m MessageFailure) Bytes() []byte {
 }
 
 type MessageSetup struct {
-	FaceCache   bool
-	LoginMethod string
+	FaceCache     bool
+	LoginMethod   string
+	ExtendedStats bool
 }
 
 func (m *MessageSetup) UnmarshalBinary(data []byte) error {
@@ -118,6 +119,12 @@ func (m MessageSetup) Bytes() []byte {
 	var result []byte
 	result = append(result, []byte(m.Kind())...)
 	result = append(result, ' ')
+	if m.ExtendedStats {
+		result = append(result, []byte("extendedstats")...)
+		result = append(result, ' ')
+		result = append(result, '1')
+		result = append(result, ' ')
+	}
 	result = append(result, []byte("facecache")...)
 	result = append(result, ' ')
 	result = append(result, '1')

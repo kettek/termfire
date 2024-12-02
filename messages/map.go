@@ -3,7 +3,6 @@ package messages
 import (
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 type MessageMap2CoordType uint16
@@ -33,7 +32,7 @@ type MessageMap2CoordDataImage struct {
 }
 
 func (m MessageMap2CoordDataImage) String() string {
-	r := fmt.Sprintf("FaceNum: %d", m.FaceNum)
+	r := fmt.Sprintf("Layer: %d, FaceNum: %d", m.Layer, m.FaceNum)
 	if m.HasAnimSpeed {
 		r += fmt.Sprintf(", AnimSpeed: %d", m.AnimSpeed)
 	}
@@ -166,80 +165,6 @@ func (m MessageMap2) Bytes() []byte {
 	return nil
 }
 
-type ItemObject struct {
-	Tag         uint32
-	Flags       uint32
-	Weight      uint32
-	TotalWeight uint32
-	Face        uint32
-	Name        string
-	PluralName  string
-	Anim        uint16
-	AnimSpeed   uint8
-	Nrof        uint32
-	Type        uint16
-}
-
-type MessageItem2 struct {
-	Location uint32
-	Objects  []ItemObject
-}
-
-func (m *MessageItem2) UnmarshalBinary(data []byte) error {
-	offset := 0
-	m.Location = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
-	offset += 4
-	for offset < len(data) {
-		var obj ItemObject
-		obj.Tag = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
-		offset += 4
-		obj.Flags = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
-		offset += 4
-		obj.Weight = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
-		offset += 4
-		obj.Face = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
-		offset += 4
-		obj.Name, offset = readLengthPrefixedString(data, offset)
-		{ // SC 1024 support
-			parts := strings.Split(obj.Name, "\x00")
-			if len(parts) > 1 {
-				obj.Name = parts[0]
-				obj.PluralName = parts[1]
-			}
-		}
-		obj.Anim = uint16(data[offset])<<8 | uint16(data[offset+1])
-		offset += 2
-		obj.AnimSpeed = uint8(data[offset])
-		offset++
-		obj.Nrof = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
-		{
-			obj.TotalWeight = obj.Weight * obj.Nrof
-		}
-		offset += 4
-		obj.Type = uint16(data[offset])<<8 | uint16(data[offset+1])
-		offset += 2
-		m.Objects = append(m.Objects, obj)
-	}
-	return nil
-}
-
-func (m MessageItem2) Kind() string {
-	return "item2"
-}
-
-func (m MessageItem2) Value() string {
-	var result string
-	result += "location: " + strconv.Itoa(int(m.Location)) + "\n"
-	for _, o := range m.Objects {
-		result += strconv.Itoa(int(o.Nrof)) + " " + o.Name + "/" + o.PluralName + " " + strconv.Itoa(int(o.Flags)) + " " + strconv.Itoa(int(o.Weight)) + " " + strconv.Itoa(int(o.TotalWeight)) + " " + strconv.Itoa(int(o.Face)) + " " + strconv.Itoa(int(o.Anim)) + " " + strconv.Itoa(int(o.AnimSpeed)) + " " + strconv.Itoa(int(o.Type)) + "\n"
-	}
-	return result
-}
-
-func (m MessageItem2) Bytes() []byte {
-	return nil
-}
-
 type MessageNewMap struct{}
 
 func (m *MessageNewMap) UnmarshalBinary(data []byte) error {
@@ -314,7 +239,6 @@ func (m MessagePlayer) Bytes() []byte {
 
 func init() {
 	gMessages = append(gMessages, &MessageMap2{})
-	gMessages = append(gMessages, &MessageItem2{})
 	gMessages = append(gMessages, &MessageNewMap{})
 	gMessages = append(gMessages, &MessageSmooth{})
 	gMessages = append(gMessages, &MessagePlayer{})

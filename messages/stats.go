@@ -1062,7 +1062,7 @@ func (m MessageStats) Kind() string {
 }
 
 func (m MessageStats) Value() string {
-	return ""
+	return fmt.Sprintf("%v", m.Stats)
 }
 
 func (m MessageStats) Bytes() []byte {

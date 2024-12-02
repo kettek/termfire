@@ -2,6 +2,8 @@ package messages
 
 import (
 	"errors"
+
+	"github.com/qdm12/reprint"
 )
 
 type Message interface {
@@ -32,7 +34,8 @@ func UnmarshalMessage(data []byte) (Message, error) {
 			if err := m.UnmarshalBinary(msgData); err != nil {
 				return nil, err
 			}
-			return m, nil
+			// This is bad, but my prior foolish decisions have led to this. FIXME: Replace the above unmarshaling into with a function that returns a new instance of the message.
+			return reprint.This(m).(Message), nil
 		}
 	}
 	return nil, errors.New("unknown message type" + msgType)
