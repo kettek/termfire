@@ -156,6 +156,17 @@ func ResetFaceToRuneMap() {
 	FaceToRuneMap = map[uint16]MapTile{}
 }
 
+type RuneSize struct {
+	Width  uint8
+	Height uint8
+}
+
+var FaceToSizeMap = map[uint16]RuneSize{}
+
+func ResetFaceToSizeMap() {
+	FaceToSizeMap = map[uint16]RuneSize{}
+}
+
 type Map struct {
 	View       *tview.Box
 	cells      [][]MapTiles // TODO: Make resizeable.

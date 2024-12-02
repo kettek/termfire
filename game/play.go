@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -224,11 +225,20 @@ func (p *Play) Init(game Game) (tidy func()) {
 		p.mapp.Clear()
 	})
 
+	p.On(&messages.MessageImage2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
+		m := msg.(*messages.MessageImage2)
+		play.FaceToSizeMap[uint16(m.Face)] = play.RuneSize{Width: uint8(m.Width / 32), Height: uint8(m.Height / 32)}
+	})
+
 	p.On(&messages.MessageFace2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageFace2)
+
+		if regexp.MustCompile(`(.*?)\.x\d\d`).MatchString(m.Name) {
+			game.SendMessage(&messages.MessageAskFace{Face: uint32(m.Num)})
+		}
+
 		r := play.NameToTile(m.Name)
 		play.FaceToRuneMap[uint16(m.Num)] = r
-		debug.Debug("face2!", msg.Value())
 	})
 
 	p.On(&messages.MessageSmooth{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
@@ -313,12 +323,30 @@ func (p *Play) Init(game Game) (tidy func()) {
 					}
 					if d.FaceNum == 0 {
 						p.mapp.RemoveCellLayer(m.X, m.Y, int(d.Layer))
+						if size, ok := play.FaceToSizeMap[d.FaceNum]; ok {
+							for x := 0; x < int(size.Width); x++ {
+								for y := 0; y < int(size.Height); y++ {
+									p.mapp.RemoveCellLayer(m.X-x, m.Y-y, int(d.Layer))
+								}
+							}
+						}
 					} else {
 						setChanges = append(setChanges, struct {
 							x, y  int
 							t     play.MapTile
 							layer int
 						}{m.X, m.Y, t, int(d.Layer)})
+						if size, ok := play.FaceToSizeMap[d.FaceNum]; ok {
+							for x := 0; x < int(size.Width); x++ {
+								for y := 0; y < int(size.Height); y++ {
+									setChanges = append(setChanges, struct {
+										x, y  int
+										t     play.MapTile
+										layer int
+									}{m.X - x, m.Y - y, t, int(d.Layer)})
+								}
+							}
+						}
 					}
 				}
 			}
