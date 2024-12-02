@@ -3,6 +3,8 @@ package messages
 import (
 	"strconv"
 	"strings"
+
+	"github.com/kettek/termfire/debug"
 )
 
 func LengthPrefixedString(s string) []byte {
@@ -98,12 +100,42 @@ func (m MessageFailure) Bytes() []byte {
 }
 
 type MessageSetup struct {
-	FaceCache     bool
-	LoginMethod   string
-	ExtendedStats bool
+	FaceCache struct {
+		Use   bool
+		Value bool
+	}
+	LoginMethod struct {
+		Use   bool
+		Value string
+	}
+	ExtendedStats struct {
+		Use   bool
+		Value bool
+	}
+	MapSize struct {
+		Use   bool
+		Value string
+	}
 }
 
 func (m *MessageSetup) UnmarshalBinary(data []byte) error {
+	parts := strings.Split(string(data), " ")
+	for i := 0; i < len(parts); i += 2 {
+		switch parts[i] {
+		case "facecache":
+			m.FaceCache.Use = true
+			m.FaceCache.Value, _ = strconv.ParseBool(parts[i+1])
+		case "loginmethod":
+			m.LoginMethod.Use = true
+			m.LoginMethod.Value = parts[i+1]
+		case "extendedstats":
+			m.ExtendedStats.Use = true
+			m.ExtendedStats.Value, _ = strconv.ParseBool(parts[i+1])
+		case "mapsize":
+			m.MapSize.Use = true
+			m.MapSize.Value = parts[i+1]
+		}
+	}
 	return nil
 }
 
@@ -112,26 +144,37 @@ func (m MessageSetup) Kind() string {
 }
 
 func (m MessageSetup) Value() string {
-	return strconv.FormatBool(m.FaceCache)
+	return "TODO"
 }
 
 func (m MessageSetup) Bytes() []byte {
 	var result []byte
 	result = append(result, []byte(m.Kind())...)
-	result = append(result, ' ')
-	if m.ExtendedStats {
+	if m.ExtendedStats.Use {
+		result = append(result, ' ')
 		result = append(result, []byte("extendedstats")...)
 		result = append(result, ' ')
 		result = append(result, '1')
-		result = append(result, ' ')
 	}
-	result = append(result, []byte("facecache")...)
-	result = append(result, ' ')
-	result = append(result, '1')
-	result = append(result, ' ')
-	result = append(result, []byte("loginmethod")...)
-	result = append(result, ' ')
-	result = append(result, []byte(m.LoginMethod)...)
+	if m.FaceCache.Use {
+		result = append(result, ' ')
+		result = append(result, []byte("facecache")...)
+		result = append(result, ' ')
+		result = append(result, '1')
+	}
+	if m.LoginMethod.Use {
+		result = append(result, ' ')
+		result = append(result, []byte("loginmethod")...)
+		result = append(result, ' ')
+		result = append(result, []byte(m.LoginMethod.Value)...)
+	}
+	if m.MapSize.Use {
+		result = append(result, ' ')
+		result = append(result, []byte("mapsize")...)
+		result = append(result, ' ')
+		result = append(result, []byte(m.MapSize.Value)...)
+	}
+	debug.Debug("Bytes:", string(result))
 	return result
 }
 

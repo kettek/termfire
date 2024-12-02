@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/kettek/termfire/debug"
@@ -127,6 +128,14 @@ func (p *Play) Init(game Game) (tidy func()) {
 	right.AddItem(p.input, 1, 1, false)
 
 	p.mapp.Init()
+	p.mapp.SetOnResize(func(width, height int) {
+		game.SendMessage(&messages.MessageSetup{
+			MapSize: struct {
+				Use   bool
+				Value string
+			}{Use: true, Value: fmt.Sprintf("%dx%d", width, height)},
+		})
+	})
 	p.mapp.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		var msg *messages.MessageCommand
 		if event.Key() == tcell.KeyUp {
@@ -201,6 +210,16 @@ func (p *Play) Init(game Game) (tidy func()) {
 	})
 	game.Pages().AddAndSwitchToPage("play", flex, true)
 	game.Redraw()
+
+	p.On(&messages.MessageSetup{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
+		m := msg.(*messages.MessageSetup)
+		if m.MapSize.Use {
+			parts := strings.Split(m.MapSize.Value, "x")
+			width, _ := strconv.Atoi(parts[0])
+			height, _ := strconv.Atoi(parts[1])
+			p.mapp.SetSize(width, height)
+		}
+	})
 
 	p.On(&messages.MessageNewMap{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		p.mapp.Clear()

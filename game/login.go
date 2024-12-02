@@ -27,7 +27,20 @@ func (l *Login) Init(game Game) (tidy func()) {
 		}
 
 		game.SendMessage(&messages.MessageVersion{CLVersion: "1030", SVName: "termfire"})
-		game.SendMessage(&messages.MessageSetup{FaceCache: true, LoginMethod: "2", ExtendedStats: true})
+		game.SendMessage(&messages.MessageSetup{
+			FaceCache: struct {
+				Use   bool
+				Value bool
+			}{Use: true, Value: true},
+			LoginMethod: struct {
+				Use   bool
+				Value string
+			}{Use: true, Value: "2"},
+			ExtendedStats: struct {
+				Use   bool
+				Value bool
+			}{Use: true, Value: true},
+		})
 
 		l.Once(&messages.MessageSetup{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 			form := tview.NewForm().

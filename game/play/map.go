@@ -110,27 +110,56 @@ func NameToTile(name string) MapTile {
 var FaceToRuneMap = map[uint16]MapTile{}
 
 type Map struct {
-	View  *tview.Box
-	cells [11][11]MapTile // TODO: Make resizeable.
+	View       *tview.Box
+	cells      [][]MapTile // TODO: Make resizeable.
+	width      int
+	height     int
+	viewWidth  int
+	viewHeight int
+	onResize   func(width, height int)
+}
+
+func (m *Map) SetOnResize(onResize func(width, height int)) {
+	m.onResize = onResize
 }
 
 func (m *Map) Init() {
 	m.View = tview.NewBox()
 	m.View.SetBorder(true)
 	m.View.SetTitle("Map")
+	m.SetSize(11, 11)
+	m.viewWidth = 11
+	m.viewHeight = 11
 	m.View.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		if width-2 != m.viewWidth || height-2 != m.viewHeight {
+			m.viewWidth = width - 2
+			m.viewHeight = height - 2
+			if m.onResize != nil {
+				m.onResize(m.viewWidth, m.viewHeight)
+			}
+			debug.Debug("resize map: ", m.viewWidth, m.viewHeight)
+		}
 		// offset so we render in the center.
-		x += (width - 11) / 2
-		y += (height - 11) / 2
+		x += (width - m.width) / 2
+		y += (height - m.height) / 2
 
-		for my := 0; my < 11; my++ {
-			for mx := 0; mx < 11; mx++ {
+		for my := 0; my < m.height; my++ {
+			for mx := 0; mx < m.width; mx++ {
 				r, fg, bg := m.cells[my][mx].R, m.cells[my][mx].F, m.cells[my][mx].B
 				screen.SetContent(x+mx+1, y+my+1, rune(r), nil, tcell.StyleDefault.Foreground(fg).Background(bg))
 			}
 		}
 		return x, y, width, height
 	})
+}
+
+func (m *Map) SetSize(width, height int) {
+	m.width = width
+	m.height = height
+	m.cells = make([][]MapTile, m.height)
+	for y := 0; y < m.height; y++ {
+		m.cells[y] = make([]MapTile, m.width)
+	}
 }
 
 func (m *Map) Clear() {
@@ -142,12 +171,16 @@ func (m *Map) Clear() {
 }
 
 func (m *Map) Shift(dx, dy int) {
-	newCells := [11][11]MapTile{}
-	for y := 0; y < 11; y++ {
-		for x := 0; x < 11; x++ {
+	newCells := make([][]MapTile, m.height)
+	for y := 0; y < m.height; y++ {
+		newCells[y] = make([]MapTile, m.width)
+	}
+
+	for y := 0; y < m.height; y++ {
+		for x := 0; x < m.width; x++ {
 			newX := x + dx
 			newY := y + dy
-			if newX < 0 || newX >= 11 || newY < 0 || newY >= 11 {
+			if newX < 0 || newX >= m.width || newY < 0 || newY >= m.height {
 				continue
 			}
 			newCells[newY][newX] = m.cells[y][x]
@@ -160,7 +193,7 @@ func (m *Map) SetCell(x, y int, r MapRune, fg tcell.Color, bg tcell.Color) {
 	if x < 0 || y < 0 {
 		return
 	}
-	if x >= 11 || y >= 11 {
+	if x >= m.width || y >= m.height {
 		return
 	}
 	m.cells[y][x] = MapTile{r, fg, bg}
