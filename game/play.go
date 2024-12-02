@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -9,6 +10,22 @@ import (
 	"github.com/kettek/termfire/messages"
 	"github.com/rivo/tview"
 )
+
+var cfToW3CColor = map[messages.MessageColor]tcell.Color{
+	messages.MessageColorBlack:      tcell.ColorBlack,
+	messages.MessageColorWhite:      tcell.ColorWhite,
+	messages.MessageColorNavy:       tcell.ColorNavy,
+	messages.MessageColorRed:        tcell.ColorRed,
+	messages.MessageColorOrange:     tcell.ColorOrange,
+	messages.MessageColorBlue:       tcell.ColorBlue,
+	messages.MessageColorDarkOrange: tcell.ColorDarkOrange,
+	messages.MessageColorGreen:      tcell.ColorGreen,
+	messages.MessageColorLightGreen: tcell.ColorLightGreen,
+	messages.MessageColorGrey:       tcell.ColorGrey,
+	messages.MessageColorBrown:      tcell.ColorBrown,
+	messages.MessageColorGold:       tcell.ColorGold,
+	messages.MessageColorTan:        tcell.ColorTan,
+}
 
 type mapRune rune
 
@@ -225,6 +242,9 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.messages.view = tview.NewTextView()
 	p.messages.view.SetScrollable(true)
+	p.messages.view.SetDynamicColors(true)
+	p.messages.view.SetWrap(true)
+	p.messages.view.SetWordWrap(true)
 	right.AddItem(p.messages.view, 0, 1, false)
 
 	p.mapp.view = tview.NewBox()
@@ -335,8 +355,11 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageDrawExtInfo{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageDrawExtInfo)
+
+		colorizedText := fmt.Sprintf("[%s]%s[%s]", cfToW3CColor[m.Color], m.Message, cfToW3CColor[messages.MessageColorWhite])
+
 		txt := p.messages.view.GetText(false)
-		p.messages.view.SetText(txt + "\n" + m.Message)
+		p.messages.view.SetText(txt + "\n" + colorizedText)
 		p.messages.view.ScrollToEnd()
 		game.Redraw()
 	})
