@@ -62,8 +62,10 @@ func (g *Game) Connect(targetServer string) error {
 					length := int(buf[offset])<<8 | int(buf[offset+1])
 
 					if offset+length > n {
+						// FIXME: Something is really wrong here -- we get message too long too often... are we failing to read some messages somehow...?
 						debug.Debug("message too long: ", offset, length, n, string(buf[offset:n]))
-						return
+						break
+						//return
 					}
 
 					offset += 2
@@ -73,10 +75,10 @@ func (g *Game) Connect(targetServer string) error {
 						debug.Debug("Failed to unmarshal message: ", err)
 						return
 					}
+					offset += length
 					g.app.QueueUpdate(func() {
 						g.state.OnMessage(message)
 					})
-					offset += length
 				}
 			}
 		}
