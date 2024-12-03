@@ -39,6 +39,7 @@ const (
 	MapEmpty              = ' '
 	MapClock              = '♦'
 	MapHills              = '∆'
+	MapMountain           = '^'
 	MapBridge             = '='
 )
 
@@ -100,7 +101,9 @@ var NameToMapTile = map[string]MapTile{
 	"cobble":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorGray},
 	"door":      {MapRuneDoor, tcell.ColorWhite, tcell.ColorBlack},
 	"gate":      {MapRuneGate, tcell.ColorGray, tcell.ColorBlack},
+	"grate":     {MapRuneGate, tcell.ColorGray, tcell.ColorBlack},
 	"water":     {MapRuneWater, tcell.ColorBlue, tcell.ColorBlack},
+	"river":     {MapRuneWater, tcell.ColorBlue, tcell.ColorLightBlue},
 	"player":    {MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack},
 	"coin":      {MapRuneCoin, tcell.ColorYellow, tcell.ColorBlack},
 	"bed":       {MapRuneBed, tcell.ColorRed, tcell.ColorBlack},
@@ -110,6 +113,7 @@ var NameToMapTile = map[string]MapTile{
 	"card":      {MapRuneScroll, tcell.ColorWhite, tcell.ColorBlack},
 	"book":      {MapRuneScroll, tcell.ColorWhite, tcell.ColorBlack},
 	"lever":     {MapRuneLever, tcell.ColorGray, tcell.ColorBlack},
+	"handle":    {MapRuneLever, tcell.ColorGray, tcell.ColorBlack},
 	"house":     {MapHouse, tcell.ColorBlack, tcell.ColorWhite},
 	"barrack":   {MapHouse, tcell.ColorBrown, tcell.ColorWhite},
 	"tavern":    {MapHouse, tcell.ColorBeige, tcell.ColorWhite},
@@ -140,6 +144,7 @@ var NameToMapTile = map[string]MapTile{
 	"empty":     {MapEmpty, tcell.ColorBlack, tcell.ColorBlack},
 	"clock":     {MapClock, tcell.ColorWhite, tcell.ColorBlack},
 	"hills":     {MapHills, tcell.ColorGreen, tcell.ColorBlack},
+	"mountain":  {MapMountain, tcell.ColorWhite, tcell.ColorGray},
 	"bridge":    {MapBridge, tcell.ColorBrown, tcell.ColorBlack},
 }
 
