@@ -37,39 +37,15 @@ type Play struct {
 	MessageHandler
 	game      Game
 	character string
-	playerTag uint32
-	inventory Inventory
-	ground    Inventory
+	playerTag int32
+	inventory play.Container
+	ground    play.Container
 	status    *tview.TextView
 	input     *tview.InputField
 	mapp      play.Map
 	messages  Messages
 	topPacket uint16
-}
-
-type Object struct {
-	Tag        uint32
-	Name       string
-	PluralName string
-	Count      int
-}
-
-type Inventory struct {
-	ListView *tview.List
-	Items    []string
-}
-
-func (i *Inventory) AddItem(item string) {
-	i.Items = append(i.Items, item)
-	i.ListView.AddItem(item, "", 0, nil)
-}
-
-func (i *Inventory) RemoveItem(item string) {
-}
-
-func (i *Inventory) Clear() {
-	i.Items = []string{}
-	i.ListView.Clear()
+	// It seems player message can be sent after inventory has been sent,
 }
 
 func (p *Play) Init(game Game) (tidy func()) {
@@ -109,11 +85,20 @@ func (p *Play) Init(game Game) (tidy func()) {
 	flex.AddItem(middle, 0, 2, false)
 	flex.AddItem(right, 0, 1, false)
 
-	p.ground.ListView = tview.NewList()
-	p.ground.ListView.SetTitle("Ground")
-	p.ground.ListView.SetBorder(true)
-	p.ground.ListView.ShowSecondaryText(false)
-	left.AddItem(p.ground.ListView, 0, 1, false)
+	p.ground.Init("Ground", []string{"Take", "Examine", "Apply"})
+	p.ground.SetOnTrigger(func(button string, object messages.ItemObject, index int) {
+		debug.Debug("triggered: ", button, object.Tag)
+
+		debug.Debug("object ", fmt.Sprintf("%d", object.Tag))
+		if button == "Take" {
+			game.SendMessage(&messages.MessageCommand{Command: fmt.Sprintf("get %d", object.Tag)})
+		} else if button == "Examine" {
+			game.SendMessage(&messages.MessageCommand{Command: fmt.Sprintf("examine %d", object.Tag)})
+		} else if button == "Apply" {
+			game.SendMessage(&messages.MessageCommand{Command: fmt.Sprintf("apply %d", object.Tag)})
+		}
+	})
+	left.AddItem(p.ground.GetContainer(), 0, 1, false)
 
 	p.messages.view = tview.NewTextView()
 	p.messages.view.SetScrollable(true)
@@ -166,7 +151,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			} else if event.Rune() == 'i' {
 				if pg, _ := game.Pages().GetFrontPage(); pg != "inventory" {
 					game.Pages().SwitchToPage("inventory")
-					game.App().SetFocus(p.inventory.ListView)
+					game.App().SetFocus(p.inventory.GetList())
 				}
 			}
 		}
@@ -181,38 +166,9 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	middle.AddItem(p.mapp.View, 0, 1, true)
 
-	inventory := tview.NewFlex()
-	inventory.SetTitle("Inventory")
-	inventory.SetDirection(tview.FlexRow)
+	p.inventory.Init("Inventory", []string{"Apply", "Drop", "Examine", "Lock", "Mark"})
 
-	p.inventory.ListView = tview.NewList()
-
-	inventoryButtons := tview.NewFlex()
-	inventoryButtons.SetDirection(tview.FlexColumn)
-	inventoryButtons.AddItem(tview.NewButton("Apply").SetSelectedFunc(func() {
-		item := p.inventory.Items[p.inventory.ListView.GetCurrentItem()]
-		debug.Debug("apply ", item)
-	}), 0, 1, false)
-	inventoryButtons.AddItem(tview.NewButton("Drop").SetSelectedFunc(func() {
-		item := p.inventory.Items[p.inventory.ListView.GetCurrentItem()]
-		debug.Debug("drop ", item)
-	}), 0, 1, false)
-	inventoryButtons.AddItem(tview.NewButton("Examine").SetSelectedFunc(func() {
-		item := p.inventory.Items[p.inventory.ListView.GetCurrentItem()]
-		debug.Debug("examine ", item)
-	}), 0, 1, false)
-	inventoryButtons.AddItem(tview.NewButton("Lock").SetSelectedFunc(func() {
-		item := p.inventory.Items[p.inventory.ListView.GetCurrentItem()]
-		debug.Debug("lock ", item)
-	}), 0, 1, false)
-	inventoryButtons.AddItem(tview.NewButton("Mark").SetSelectedFunc(func() {
-		item := p.inventory.Items[p.inventory.ListView.GetCurrentItem()]
-		debug.Debug("mark ", item)
-	}), 0, 1, false)
-	inventory.AddItem(p.inventory.ListView, 0, 1, false)
-	inventory.AddItem(inventoryButtons, 1, 1, false)
-
-	game.Pages().AddPage("inventory", inventory, true, true)
+	game.Pages().AddPage("inventory", p.inventory.GetContainer(), true, true)
 
 	game.Pages().SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
@@ -277,20 +233,12 @@ func (p *Play) Init(game Game) (tidy func()) {
 		if m.Location == 0 {
 			p.ground.Clear()
 			for _, item := range m.Objects {
-				name := item.Name
-				if item.Nrof > 1 {
-					name = strconv.Itoa(int(item.Nrof)) + " " + item.PluralName
-				}
-				p.ground.AddItem(name)
+				p.ground.AddItem(item)
 			}
 		} else {
 			if m.Location == p.playerTag {
 				for _, item := range m.Objects {
-					if item.Nrof > 1 {
-						p.inventory.AddItem(strconv.Itoa(int(item.Nrof)) + " " + item.PluralName)
-					} else {
-						p.inventory.AddItem(item.Name)
-					}
+					p.inventory.AddItem(item)
 				}
 			} else {
 				debug.Debug("some items @ ", m.Location, ": ", m.Objects)

@@ -7,7 +7,7 @@ import (
 )
 
 type ItemObject struct {
-	Tag         uint32
+	Tag         int32
 	Flags       uint32
 	Weight      uint32
 	TotalWeight uint32
@@ -20,19 +20,26 @@ type ItemObject struct {
 	Type        uint16
 }
 
+func (o ItemObject) GetName() string {
+	if o.Nrof > 1 {
+		return fmt.Sprintf("%d %s", o.Nrof, o.PluralName)
+	}
+	return o.Name
+}
+
 type MessageItem2 struct {
-	Location uint32
+	Location int32
 	Objects  []ItemObject
 }
 
 func (m *MessageItem2) UnmarshalBinary(data []byte) error {
 	offset := 0
-	m.Location = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+	m.Location = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 	offset += 4
 	m.Objects = make([]ItemObject, 0)
 	for offset < len(data) {
 		var obj ItemObject
-		obj.Tag = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+		obj.Tag = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		offset += 4
 		obj.Flags = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
 		offset += 4
@@ -82,7 +89,7 @@ func (m MessageItem2) Bytes() []byte {
 }
 
 type MessageUpdateItem struct {
-	Tag    uint32
+	Tag    int32
 	Flags  uint8
 	Values []any // TODO
 }
@@ -104,12 +111,12 @@ func (m MessageUpdateItem) Bytes() []byte {
 }
 
 type MessageDeleteItem struct {
-	Tags []uint32
+	Tags []int32
 }
 
 func (m *MessageDeleteItem) UnmarshalBinary(data []byte) error {
 	for i := 0; i < len(data); i += 4 {
-		m.Tags = append(m.Tags, uint32(data[i])<<24|uint32(data[i+1])<<16|uint32(data[i+2])<<8|uint32(data[i+3]))
+		m.Tags = append(m.Tags, int32(data[i])<<24|int32(data[i+1])<<16|int32(data[i+2])<<8|int32(data[i+3]))
 	}
 	return nil
 }
@@ -127,12 +134,12 @@ func (m MessageDeleteItem) Bytes() []byte {
 }
 
 type MessageDeleteInventory struct {
-	Tag uint32
+	Tag int32
 }
 
 func (m *MessageDeleteInventory) UnmarshalBinary(data []byte) error {
 	v, _ := strconv.Atoi(string(data))
-	m.Tag = uint32(v)
+	m.Tag = int32(v)
 	return nil
 }
 

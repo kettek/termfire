@@ -215,7 +215,7 @@ func (m MessageSmooth) Bytes() []byte {
 }
 
 type MessagePlayer struct {
-	Tag    uint32
+	Tag    int32
 	Weight uint32
 	Face   uint32
 	Name   string
@@ -223,7 +223,7 @@ type MessagePlayer struct {
 
 func (m *MessagePlayer) UnmarshalBinary(data []byte) error {
 	offset := 0
-	m.Tag = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+	m.Tag = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 	offset += 4
 	m.Weight = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
 	offset += 4
