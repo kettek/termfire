@@ -51,46 +51,6 @@ const (
 	MapStairs               = '<'
 )
 
-type MapTiles []MapTile
-
-func (t *MapTiles) SetCell(layer int, r MapRune, fg tcell.Color, bg tcell.Color) {
-	if layer >= len(*t) {
-		*t = append(*t, MapTile{})
-	}
-	for len(*t) <= layer {
-		*t = append(*t, MapTile{})
-	}
-	(*t)[layer] = MapTile{r, fg, bg}
-}
-
-func (t *MapTiles) RemoveLayer(layer int) {
-	if layer >= len(*t) {
-		return
-	}
-	*t = append((*t)[:layer], (*t)[layer+1:]...)
-}
-
-func (t *MapTiles) GetCell(layer int) MapTile {
-	if layer >= len(*t) || layer < 0 {
-		return MapTile{}
-	}
-	return (*t)[layer]
-}
-
-func (t *MapTiles) GetTopCell() MapTile {
-	// Get it if the rune is non-zero
-	for i := len(*t) - 1; i >= 0; i-- {
-		if (*t)[i].R != 0 {
-			return (*t)[i]
-		}
-	}
-	return t.GetCell(len(*t) - 1)
-}
-
-func (t *MapTiles) GetBottomCell() MapTile {
-	return t.GetCell(0)
-}
-
 type MapTile struct {
 	R MapRune
 	F tcell.Color
@@ -206,7 +166,7 @@ func ResetFaceToSizeMap() {
 
 type Map struct {
 	View       *tview.Box
-	cells      [][]MapTiles // TODO: Make resizeable.
+	layers     [10][][]MapTile
 	width      int
 	height     int
 	viewWidth  int
@@ -249,10 +209,11 @@ func (m *Map) Init() {
 		x += (width - m.width) / 2
 		y += (height - m.height) / 2
 
-		for my := 0; my < m.height; my++ {
-			for mx := 0; mx < m.width; mx++ {
-				top := m.cells[my][mx].GetTopCell()
-				bot := m.cells[my][mx].GetBottomCell()
+		// Draw from bottom-right to top-left
+		for my := m.height - 1; my >= 0; my-- {
+			for mx := m.width - 1; mx >= 0; mx-- {
+				top := m.GetTopCell(mx, my)
+				bot := m.GetBottomCell(mx, my)
 
 				r := top.R
 				fg := top.F
@@ -280,50 +241,61 @@ func (m *Map) Init() {
 func (m *Map) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-	m.cells = make([][]MapTiles, m.height)
-	for y := 0; y < m.height; y++ {
-		m.cells[y] = make([]MapTiles, m.width)
-		for x := 0; x < m.width; x++ {
-			m.cells[y][x] = MapTiles{}
+
+	m.layers = [10][][]MapTile{}
+	for i := 0; i < 10; i++ {
+		m.layers[i] = make([][]MapTile, m.height)
+		for y := 0; y < m.height; y++ {
+			m.layers[i][y] = make([]MapTile, m.width)
 		}
 	}
 }
 
 func (m *Map) Clear() {
-	for y := 0; y < len(m.cells); y++ {
-		for x := 0; x < len(m.cells[y]); x++ {
-			m.cells[y][x] = MapTiles{}
+	for i := 0; i < 10; i++ {
+		for y := 0; y < len(m.layers[i]); y++ {
+			for x := 0; x < len(m.layers[i][y]); x++ {
+				m.layers[i][y][x] = MapTile{}
+			}
 		}
 	}
 }
 
 func (m *Map) Shift(dx, dy int) {
-	newCells := make([][]MapTiles, m.height)
-	for y := 0; y < m.height; y++ {
-		newCells[y] = make([]MapTiles, m.width)
-	}
-
-	for y := 0; y < m.height; y++ {
-		for x := 0; x < m.width; x++ {
-			newX := x + dx
-			newY := y + dy
-			if newX < 0 || newX >= m.width || newY < 0 || newY >= m.height {
-				continue
-			}
-			newCells[newY][newX] = m.cells[y][x]
+	newLayers := [10][][]MapTile{}
+	for i := 0; i < 10; i++ {
+		newLayers[i] = make([][]MapTile, m.height)
+		for y := 0; y < m.height; y++ {
+			newLayers[i][y] = make([]MapTile, m.width)
 		}
 	}
-	m.cells = newCells
+
+	for i := 0; i < 10; i++ {
+		for y := 0; y < m.height; y++ {
+			for x := 0; x < m.width; x++ {
+				newX := x + dx
+				newY := y + dy
+				if newX < 0 || newX >= m.width || newY < 0 || newY >= m.height {
+					continue
+				}
+				newLayers[i][newY][newX] = m.layers[i][y][x]
+			}
+		}
+	}
+	m.layers = newLayers
 }
 
 func (m *Map) SetCell(x, y int, layer int, r MapRune, fg tcell.Color, bg tcell.Color) {
+	if layer < 0 || layer >= 10 {
+		return
+	}
 	if x < 0 || y < 0 {
 		return
 	}
 	if x >= m.width || y >= m.height {
 		return
 	}
-	m.cells[y][x].SetCell(layer, r, fg, bg)
+	m.layers[layer][y][x] = MapTile{r, fg, bg}
 }
 
 func (m *Map) ClearCell(x, y int) {
@@ -333,25 +305,40 @@ func (m *Map) ClearCell(x, y int) {
 	if x >= m.width || y >= m.height {
 		return
 	}
-	m.cells[y][x] = MapTiles{}
+
+	for i := 0; i < 10; i++ {
+		m.layers[i][y][x] = MapTile{}
+	}
 }
 
 func (m *Map) RemoveCellLayer(x, y, layer int) {
+	if layer < 0 || layer >= 10 {
+		return
+	}
 	if x < 0 || y < 0 {
 		return
 	}
 	if x >= m.width || y >= m.height {
 		return
 	}
-	m.cells[y][x].RemoveLayer(layer)
+	m.layers[layer][y][x] = MapTile{}
 }
 
-func (m *Map) GetCell(x, y int) MapTiles {
-	if x < 0 || y < 0 {
-		return MapTiles{}
+func (m *Map) GetTopCell(x, y int) MapTile {
+	for i := 9; i >= 0; i-- {
+		if m.layers[i][y][x].R != 0 {
+			return m.layers[i][y][x]
+		}
 	}
-	if x >= m.width || y >= m.height {
-		return MapTiles{}
+
+	return MapTile{}
+}
+
+func (m *Map) GetBottomCell(x, y int) MapTile {
+	for i := 0; i < 10; i++ {
+		if m.layers[i][y][x].R != 0 {
+			return m.layers[i][y][x]
+		}
 	}
-	return m.cells[y][x]
+	return MapTile{}
 }
