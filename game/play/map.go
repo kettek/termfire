@@ -39,6 +39,7 @@ const (
 	MapEmpty              = ' '
 	MapClock              = '♦'
 	MapHills              = '∆'
+	MapBridge             = '='
 )
 
 type MapTiles []MapTile
@@ -139,6 +140,7 @@ var NameToMapTile = map[string]MapTile{
 	"empty":     {MapEmpty, tcell.ColorBlack, tcell.ColorBlack},
 	"clock":     {MapClock, tcell.ColorWhite, tcell.ColorBlack},
 	"hills":     {MapHills, tcell.ColorGreen, tcell.ColorBlack},
+	"bridge":    {MapBridge, tcell.ColorBrown, tcell.ColorBlack},
 }
 
 func NameToTile(name string) MapTile {
