@@ -33,6 +33,14 @@ type Messages struct {
 	view *tview.TextView
 }
 
+func (m *Messages) Init() {
+	m.view = tview.NewTextView()
+	m.view.SetScrollable(true)
+	m.view.SetDynamicColors(true)
+	m.view.SetWrap(true)
+	m.view.SetWordWrap(true)
+}
+
 func (m *Messages) Add(msg string, color messages.MessageColor) {
 	colorizedText := fmt.Sprintf("[%s]%s[%s]", cfToW3CColor[color], msg, cfToW3CColor[messages.MessageColorWhite])
 
@@ -52,6 +60,7 @@ type Play struct {
 	input     *tview.InputField
 	mapp      play.Map
 	messages  Messages
+	sounds    Messages
 	topPacket uint16
 	lastDir   string // Not sure if we can query this instead...
 }
@@ -108,11 +117,8 @@ func (p *Play) Init(game Game) (tidy func()) {
 	})
 	left.AddItem(p.ground.GetContainer(), 0, 1, false)
 
-	p.messages.view = tview.NewTextView()
-	p.messages.view.SetScrollable(true)
-	p.messages.view.SetDynamicColors(true)
-	p.messages.view.SetWrap(true)
-	p.messages.view.SetWordWrap(true)
+	p.sounds.Init()
+	p.messages.Init()
 
 	p.input = tview.NewInputField()
 	p.input.SetDoneFunc(func(key tcell.Key) {
@@ -129,7 +135,8 @@ func (p *Play) Init(game Game) (tidy func()) {
 		game.Pages().SwitchToPage("play")
 	})
 
-	right.AddItem(p.messages.view, 0, 1, false)
+	right.AddItem(p.sounds.view, 0, 1, false)
+	right.AddItem(p.messages.view, 0, 4, false)
 	right.AddItem(p.input, 1, 1, false)
 
 	p.mapp.Init()
@@ -255,6 +262,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageDrawExtInfo{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageDrawExtInfo)
+		debug.Debug("draw ext info!", m)
 		p.messages.Add(m.Message, m.Color)
 		game.Redraw()
 	})
@@ -324,7 +332,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			prefix = "an"
 		}
 
-		p.messages.Add(fmt.Sprintf("You hear %s %s %s", prefix, m.Action, dirstring), messages.MessageColorTan)
+		p.sounds.Add(fmt.Sprintf("You hear %s %s %s", prefix, m.Action, dirstring), messages.MessageColorGrey)
 		game.Redraw()
 	})
 
