@@ -11,36 +11,44 @@ import (
 type MapRune rune
 
 const (
-	MapRuneWall   MapRune = '█'
-	MapRuneWindow         = '▓'
-	MapRuneStones         = '·'
-	MapRuneDirt           = '░'
-	MapRuneDoor           = '+'
-	MapRuneGate           = '‡'
-	MapRuneWater          = '~'
-	MapRunePlayer         = '@'
-	MapRuneCoin           = '¢'
-	MapRuneBed            = '&'
-	MapRuneTable          = 'T'
-	MapRuneChair          = 'h'
-	MapRuneScroll         = '!'
-	MapRuneLever          = '/'
-	MapHouse              = '#'
-	MapShop               = '#'
-	MapTower              = '#'
-	MapPlant              = '♣'
-	MapTree               = '♠'
-	MapLight              = '¡'
-	MapPond               = '≈'
-	MapFountain           = '⌂'
-	MapSign               = '¶'
-	MapStatue             = '☻'
-	MapWell               = 'O'
-	MapEmpty              = ' '
-	MapClock              = '♦'
-	MapHills              = '∆'
-	MapMountain           = '^'
-	MapBridge             = '='
+	MapRuneWall     MapRune = '█'
+	MapRuneWindow           = '▓'
+	MapRuneStones           = '·'
+	MapRuneDirt             = '░'
+	MapRuneDoor             = '+'
+	MapRuneGate             = '‡'
+	MapRuneWater            = '~'
+	MapRunePlayer           = '@'
+	MapRuneCoin             = '¢'
+	MapRuneBed              = '&'
+	MapRuneTable            = 'T'
+	MapRuneChair            = 'h'
+	MapRuneScroll           = '!'
+	MapRuneAmulet           = '¤'
+	MapRuneTalisman         = '¥'
+	MapRuneRing             = '°'
+	MapRuneLever            = '/'
+	MapHouse                = '▲'
+	MapShop                 = '#'
+	MapTower                = '#'
+	MapPlant                = '♣'
+	MapTree                 = '♠'
+	MapJungle               = '♣'
+	MapLight                = '¡'
+	MapPond                 = '≈'
+	MapFountain             = '⌂'
+	MapSign                 = '¶'
+	MapStatue               = '☻'
+	MapWell                 = 'O'
+	MapEmpty                = ' '
+	MapClock                = '♦'
+	MapHills                = '∆'
+	MapMountain             = '^'
+	MapBridge               = '='
+	MapAltar                = '†'
+	MapCorpse               = ','
+	MapHole                 = '>'
+	MapStairs               = '<'
 )
 
 type MapTiles []MapTile
@@ -92,22 +100,33 @@ type MapTile struct {
 var NameToMapTile = map[string]MapTile{
 	"wall":      {MapRuneWall, tcell.ColorWhite, tcell.ColorBlack},
 	"window":    {MapRuneWindow, tcell.ColorWhite, tcell.ColorBlack},
+	"mine":      {MapRuneWall, tcell.ColorDarkGray, tcell.ColorBlack},
 	"floor":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
 	"stones":    {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
 	"stone":     {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
+	"medston":   {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
 	"pier":      {MapRuneDirt, tcell.ColorTan, tcell.ColorBrown},
 	"dirt":      {MapRuneDirt, tcell.ColorBrown, tcell.ColorBlack},
+	"farm":      {MapRuneDirt, tcell.ColorGold, tcell.ColorBrown},
 	"grass":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorGreen},
+	"beach":     {MapRuneDirt, tcell.ColorTan, tcell.ColorYellow},
+	"desert":    {MapRuneDirt, tcell.ColorYellow, tcell.ColorGold},
 	"ground":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
 	"cobble":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorGray},
+	"steppe":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorTan},
 	"door":      {MapRuneDoor, tcell.ColorWhite, tcell.ColorBlack},
 	"gate":      {MapRuneGate, tcell.ColorGray, tcell.ColorBlack},
 	"grate":     {MapRuneGate, tcell.ColorGray, tcell.ColorBlack},
 	"water":     {MapRuneWater, tcell.ColorBlue, tcell.ColorBlack},
 	"river":     {MapRuneWater, tcell.ColorBlue, tcell.ColorLightBlue},
 	"sea":       {MapRuneDirt, tcell.ColorBlue, tcell.ColorLightBlue},
+	"branch_":   {MapRuneWater, tcell.ColorBlue, tcell.ColorLightBlue},
+	"swamp":     {MapRuneDirt, tcell.ColorLightGreen, tcell.ColorDarkGreen},
 	"player":    {MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack},
 	"coin":      {MapRuneCoin, tcell.ColorYellow, tcell.ColorBlack},
+	"amulet":    {MapRuneAmulet, tcell.ColorWhite, tcell.ColorBlack},
+	"talisman":  {MapRuneTalisman, tcell.ColorWhite, tcell.ColorBlack},
+	"ring":      {MapRuneRing, tcell.ColorWhite, tcell.ColorBlack},
 	"bed":       {MapRuneBed, tcell.ColorRed, tcell.ColorBlack},
 	"table":     {MapRuneTable, tcell.ColorBeige, tcell.ColorBlack},
 	"chair":     {MapRuneChair, tcell.ColorBeige, tcell.ColorBlack},
@@ -119,6 +138,7 @@ var NameToMapTile = map[string]MapTile{
 	"house":     {MapHouse, tcell.ColorBlack, tcell.ColorWhite},
 	"barrack":   {MapHouse, tcell.ColorBrown, tcell.ColorWhite},
 	"barn":      {MapHouse, tcell.ColorBrown, tcell.ColorWhite},
+	"hut":       {MapHouse, tcell.ColorBrown, tcell.ColorWhite},
 	"tavern":    {MapHouse, tcell.ColorBeige, tcell.ColorWhite},
 	"guild":     {MapHouse, tcell.ColorDarkGray, tcell.ColorWhite},
 	"fort":      {MapHouse, tcell.ColorBlack, tcell.ColorWhite},
@@ -132,9 +152,11 @@ var NameToMapTile = map[string]MapTile{
 	"inn":       {MapHouse, tcell.ColorBeige, tcell.ColorBlack},
 	"zoo":       {MapHouse, tcell.ColorWhite, tcell.ColorBlack},
 	"shrub":     {MapPlant, tcell.ColorGreen, tcell.ColorBlack},
-	"brush":     {MapPlant, tcell.ColorGreen, tcell.ColorBlack},
+	"brush":     {MapPlant, tcell.ColorDarkGreen, tcell.ColorGreen},
 	"tree":      {MapTree, tcell.ColorGreen, tcell.ColorBlack},
+	"jungle":    {MapJungle, tcell.ColorLightGreen, tcell.ColorDarkGreen},
 	"lamp":      {MapLight, tcell.ColorYellow, tcell.ColorBlack},
+	"brazier":   {MapLight, tcell.ColorRed, tcell.ColorBlack},
 	"pond":      {MapPond, tcell.ColorBlue, tcell.ColorBlack},
 	"lake":      {MapPond, tcell.ColorBlue, tcell.ColorBlack},
 	"grasspond": {MapPond, tcell.ColorBlue, tcell.ColorGreen},
@@ -146,9 +168,13 @@ var NameToMapTile = map[string]MapTile{
 	"woods":     {MapTree, tcell.ColorGreen, tcell.ColorBlack},
 	"empty":     {MapEmpty, tcell.ColorBlack, tcell.ColorBlack},
 	"clock":     {MapClock, tcell.ColorWhite, tcell.ColorBlack},
-	"hills":     {MapHills, tcell.ColorGreen, tcell.ColorBlack},
+	"hills":     {MapHills, tcell.ColorBlack, tcell.ColorGreen},
 	"mountain":  {MapMountain, tcell.ColorWhite, tcell.ColorGray},
 	"bridge":    {MapBridge, tcell.ColorBrown, tcell.ColorBlack},
+	"altar":     {MapAltar, tcell.ColorWhite, tcell.ColorBlack},
+	"corpse":    {MapCorpse, tcell.ColorTan, tcell.ColorBlack},
+	"hole":      {MapHole, tcell.ColorDarkGray, tcell.ColorBlack},
+	"stair":     {MapStairs, tcell.ColorWhite, tcell.ColorBlack},
 }
 
 func NameToTile(name string) MapTile {
@@ -207,8 +233,6 @@ func (m *Map) CenterY() int {
 
 func (m *Map) Init() {
 	m.View = tview.NewBox()
-	m.View.SetBorder(true)
-	m.View.SetTitle("Map")
 	m.SetSize(11, 11)
 	m.viewWidth = 11
 	m.viewHeight = 11
