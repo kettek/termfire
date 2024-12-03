@@ -5,10 +5,12 @@ import (
 )
 
 type MessageImage2 struct {
-	Face   uint32
-	Set    uint8
+	Face uint32
+	Set  uint8
+	// We extract the width and height manually for the TUI client, so it doesn't have to actually manage PNGs.
 	Width  int
 	Height int
+	Data   []byte // PNG payload.
 }
 
 func (m *MessageImage2) UnmarshalBinary(data []byte) error {
@@ -17,7 +19,9 @@ func (m *MessageImage2) UnmarshalBinary(data []byte) error {
 	offset += 4
 	m.Set = uint8(data[4])
 	offset++
-	//dataLen := uint32(data[5])<<24 | uint32(data[6])<<16 | uint32(data[7])<<8 | uint32(data[8])
+	dataLen := uint32(data[5])<<24 | uint32(data[6])<<16 | uint32(data[7])<<8 | uint32(data[8])
+	// NOTE: We could make this optional, in the event the client doesn't actually want the data...
+	m.Data = data[offset : offset+int(dataLen)]
 	offset += 4
 	// For now we just want the width and height so we can determine columns and rows the image contains. If this library is used for graphics, we'd want the actual data.
 	for i := 0; i < len(data); i++ {
