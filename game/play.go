@@ -45,7 +45,7 @@ type Play struct {
 	mapp      play.Map
 	messages  Messages
 	topPacket uint16
-	// It seems player message can be sent after inventory has been sent,
+	lastDir   string // Not sure if we can query this instead...
 }
 
 func (p *Play) Init(game Game) (tidy func()) {
@@ -137,12 +137,16 @@ func (p *Play) Init(game Game) (tidy func()) {
 		var msg *messages.MessageCommand
 		if event.Key() == tcell.KeyUp {
 			msg = &messages.MessageCommand{Command: "north"}
+			p.lastDir = "north"
 		} else if event.Key() == tcell.KeyDown {
 			msg = &messages.MessageCommand{Command: "south"}
+			p.lastDir = "south"
 		} else if event.Key() == tcell.KeyLeft {
 			msg = &messages.MessageCommand{Command: "west"}
+			p.lastDir = "west"
 		} else if event.Key() == tcell.KeyRight {
 			msg = &messages.MessageCommand{Command: "east"}
+			p.lastDir = "east"
 		} else if event.Key() == tcell.KeyRune {
 			if event.Rune() == 'a' {
 				msg = &messages.MessageCommand{Command: "apply"}
@@ -163,10 +167,39 @@ func (p *Play) Init(game Game) (tidy func()) {
 		}
 		return event
 	})
+	p.mapp.SetOnPostDraw(func(screen tcell.Screen, x, y, width, height int) {
+		// TODO: Make this optional/configurable.
+		cx := p.mapp.CenterX()
+		cy := p.mapp.CenterY()
+		switch p.lastDir {
+		case "north":
+			screen.SetContent(x+cx+1, y+cy+1, '↑', nil, tcell.StyleDefault)
+		case "south":
+			screen.SetContent(x+cx+1, y+cy+1, '↓', nil, tcell.StyleDefault)
+		case "west":
+			screen.SetContent(x+cx+1, y+cy+1, '←', nil, tcell.StyleDefault)
+		case "east":
+			screen.SetContent(x+cx+1, y+cy+1, '→', nil, tcell.StyleDefault)
+		}
+	})
 
 	middle.AddItem(p.mapp.View, 0, 1, true)
 
 	p.inventory.Init("Inventory", []string{"Apply", "Drop", "Examine", "Lock", "Mark"})
+	p.inventory.SetOnTrigger(func(button string, object messages.ItemObject, index int) {
+		if button == "Apply" {
+			game.SendMessage(&messages.MessageApply{Tag: object.Tag})
+		} else if button == "Drop" {
+			game.SendMessage(&messages.MessageMove{To: 0, Tag: object.Tag})
+		} else if button == "Examine" {
+			game.SendMessage(&messages.MessageExamine{Tag: object.Tag})
+		} else if button == "Lock" {
+			// TODO: Check if object is locked or not and toggle based on that.
+			game.SendMessage(&messages.MessageLock{Tag: object.Tag})
+		} else if button == "Mark" {
+			game.SendMessage(&messages.MessageMark{Tag: object.Tag})
+		}
+	})
 
 	game.Pages().AddPage("inventory", p.inventory.GetContainer(), true, true)
 

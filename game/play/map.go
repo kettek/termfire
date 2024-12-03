@@ -176,10 +176,15 @@ type Map struct {
 	viewWidth  int
 	viewHeight int
 	onResize   func(width, height int)
+	onPostDraw func(screen tcell.Screen, x, y, width, height int)
 }
 
 func (m *Map) SetOnResize(onResize func(width, height int)) {
 	m.onResize = onResize
+}
+
+func (m *Map) SetOnPostDraw(onPostDraw func(screen tcell.Screen, x, y, width, height int)) {
+	m.onPostDraw = onPostDraw
 }
 
 func (m *Map) CenterX() int {
@@ -230,6 +235,9 @@ func (m *Map) Init() {
 
 				screen.SetContent(x+mx+1, y+my+1, rune(r), nil, style.Foreground(fg).Background(bg))
 			}
+		}
+		if m.onPostDraw != nil {
+			m.onPostDraw(screen, x, y, width, height)
 		}
 		return x, y, width, height
 	})
