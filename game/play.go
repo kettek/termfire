@@ -91,11 +91,11 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 		debug.Debug("object ", fmt.Sprintf("%d", object.Tag))
 		if button == "Take" {
-			game.SendMessage(&messages.MessageCommand{Command: fmt.Sprintf("get %d", object.Tag)})
+			game.SendMessage(&messages.MessageMove{To: p.playerTag, Tag: object.Tag})
 		} else if button == "Examine" {
-			game.SendMessage(&messages.MessageCommand{Command: fmt.Sprintf("examine %d", object.Tag)})
+			game.SendMessage(&messages.MessageExamine{Tag: object.Tag})
 		} else if button == "Apply" {
-			game.SendMessage(&messages.MessageCommand{Command: fmt.Sprintf("apply %d", object.Tag)})
+			game.SendMessage(&messages.MessageApply{Tag: object.Tag})
 		}
 	})
 	left.AddItem(p.ground.GetContainer(), 0, 1, false)
