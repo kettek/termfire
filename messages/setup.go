@@ -116,6 +116,10 @@ type MessageSetup struct {
 		Use   bool
 		Value string
 	}
+	Sound2 struct {
+		Use   bool
+		Value uint8
+	}
 }
 
 func (m *MessageSetup) UnmarshalBinary(data []byte) error {
@@ -134,6 +138,10 @@ func (m *MessageSetup) UnmarshalBinary(data []byte) error {
 		case "mapsize":
 			m.MapSize.Use = true
 			m.MapSize.Value = parts[i+1]
+		case "sound2":
+			m.Sound2.Use = true
+			v, _ := strconv.ParseUint(parts[i+1], 10, 8)
+			m.Sound2.Value = uint8(v)
 		}
 	}
 	return nil
@@ -173,6 +181,12 @@ func (m MessageSetup) Bytes() []byte {
 		result = append(result, []byte("mapsize")...)
 		result = append(result, ' ')
 		result = append(result, []byte(m.MapSize.Value)...)
+	}
+	if m.Sound2.Use {
+		result = append(result, ' ')
+		result = append(result, []byte("sound2")...)
+		result = append(result, ' ')
+		result = append(result, []byte(strconv.Itoa(int(m.Sound2.Value)))...)
 	}
 	debug.Debug("Bytes:", string(result))
 	return result

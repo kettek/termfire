@@ -33,6 +33,14 @@ type Messages struct {
 	view *tview.TextView
 }
 
+func (m *Messages) Add(msg string, color messages.MessageColor) {
+	colorizedText := fmt.Sprintf("[%s]%s[%s]", cfToW3CColor[color], msg, cfToW3CColor[messages.MessageColorWhite])
+
+	txt := m.view.GetText(false)
+	m.view.SetText(txt + "\n" + colorizedText)
+	m.view.ScrollToEnd()
+}
+
 type Play struct {
 	MessageHandler
 	game      Game
@@ -247,12 +255,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageDrawExtInfo{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageDrawExtInfo)
-
-		colorizedText := fmt.Sprintf("[%s]%s[%s]", cfToW3CColor[m.Color], m.Message, cfToW3CColor[messages.MessageColorWhite])
-
-		txt := p.messages.view.GetText(false)
-		p.messages.view.SetText(txt + "\n" + colorizedText)
-		p.messages.view.ScrollToEnd()
+		p.messages.Add(m.Message, m.Color)
 		game.Redraw()
 	})
 
@@ -280,6 +283,11 @@ func (p *Play) Init(game Game) (tidy func()) {
 		game.Redraw()
 	})
 
+	p.On(&messages.MessageUpdateItem{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
+		m := msg.(*messages.MessageUpdateItem)
+		debug.Debug("update item: ", m)
+	})
+
 	p.On(&messages.MessageStats{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageStats)
 		debug.Debug("stats!", msg.Value())
@@ -289,6 +297,35 @@ func (p *Play) Init(game Game) (tidy func()) {
 				debug.Debug("str: ", *s)
 			}
 		}
+	})
+
+	p.On(&messages.MessageSound{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
+		m := msg.(*messages.MessageSound)
+
+		var dirstring string
+		if m.Y < 0 {
+			dirstring = "north"
+		} else if m.Y > 0 {
+			dirstring = "south"
+		}
+		if m.X < 0 {
+			dirstring += "west"
+		} else if m.X > 0 {
+			dirstring += "east"
+		}
+		if dirstring == "" {
+			dirstring = "under you"
+		} else {
+			dirstring = "to the " + dirstring
+		}
+
+		prefix := "a"
+		if strings.ContainsAny(m.Name[:1], "aeiou") {
+			prefix = "an"
+		}
+
+		p.messages.Add(fmt.Sprintf("You hear %s %s %s", prefix, m.Action, dirstring), messages.MessageColorTan)
+		game.Redraw()
 	})
 
 	p.On(&messages.MessageMap2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {

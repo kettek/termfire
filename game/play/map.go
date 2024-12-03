@@ -30,7 +30,7 @@ const (
 	MapTower              = '#'
 	MapPlant              = '♣'
 	MapTree               = '♠'
-	MapLight              = '☼'
+	MapLight              = '¡'
 	MapPond               = '≈'
 	MapFountain           = '⌂'
 	MapSign               = '¶'
@@ -95,6 +95,7 @@ var NameToMapTile = map[string]MapTile{
 	"floor":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
 	"stones":    {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
 	"stone":     {MapRuneStones, tcell.ColorWhite, tcell.ColorGray},
+	"pier":      {MapRuneDirt, tcell.ColorTan, tcell.ColorBrown},
 	"dirt":      {MapRuneDirt, tcell.ColorBrown, tcell.ColorBlack},
 	"grass":     {MapRuneDirt, tcell.ColorBlack, tcell.ColorGreen},
 	"ground":    {MapRuneDirt, tcell.ColorBlack, tcell.ColorWhite},
@@ -104,6 +105,7 @@ var NameToMapTile = map[string]MapTile{
 	"grate":     {MapRuneGate, tcell.ColorGray, tcell.ColorBlack},
 	"water":     {MapRuneWater, tcell.ColorBlue, tcell.ColorBlack},
 	"river":     {MapRuneWater, tcell.ColorBlue, tcell.ColorLightBlue},
+	"sea":       {MapRuneDirt, tcell.ColorBlue, tcell.ColorLightBlue},
 	"player":    {MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack},
 	"coin":      {MapRuneCoin, tcell.ColorYellow, tcell.ColorBlack},
 	"bed":       {MapRuneBed, tcell.ColorRed, tcell.ColorBlack},
@@ -116,6 +118,7 @@ var NameToMapTile = map[string]MapTile{
 	"handle":    {MapRuneLever, tcell.ColorGray, tcell.ColorBlack},
 	"house":     {MapHouse, tcell.ColorBlack, tcell.ColorWhite},
 	"barrack":   {MapHouse, tcell.ColorBrown, tcell.ColorWhite},
+	"barn":      {MapHouse, tcell.ColorBrown, tcell.ColorWhite},
 	"tavern":    {MapHouse, tcell.ColorBeige, tcell.ColorWhite},
 	"guild":     {MapHouse, tcell.ColorDarkGray, tcell.ColorWhite},
 	"fort":      {MapHouse, tcell.ColorBlack, tcell.ColorWhite},

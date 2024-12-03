@@ -44,6 +44,10 @@ func (l *Login) Init(game Game) (tidy func()) {
 				Use   bool
 				Value bool
 			}{Use: true, Value: true},
+			Sound2: struct {
+				Use   bool
+				Value uint8
+			}{Use: true, Value: 1},
 		})
 
 		// We need to add any messages here to our face to rune map cache, as otherwise they'll be lost to the void.
