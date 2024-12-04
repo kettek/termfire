@@ -8,9 +8,9 @@
 ¢ coin
 + door
 ‡ gate grate
-h chair
+┕ chair
 & bed
-T table
+┯ table
 / lever switch handle
 ! book scroll card
 ¿ potion
@@ -21,7 +21,7 @@ T table
 //# church shop tower house hall guild inn jail shrine temple farm
 † altar
 $ conver
-≈ fog this breaks windows...
+≈ fog
 ¤ amulet
 ¥ talisman
 ° ring
