@@ -58,18 +58,19 @@ func (m *Messages) Add(msg string, color messages.MessageColor) {
 
 type Play struct {
 	MessageHandler
-	game      Game
-	character string
-	playerTag int32
-	inventory play.Container
-	ground    play.Container
-	status    *tview.TextView
-	input     *tview.InputField
-	mapp      play.Map
-	messages  Messages
-	sounds    Messages
-	topPacket uint16
-	lastDir   string // Not sure if we can query this instead...
+	game            Game
+	character       string
+	playerTag       int32
+	objectDebugView play.ObjectDebugView
+	inventory       play.Container
+	ground          play.Container
+	status          *tview.TextView
+	input           *tview.InputField
+	mapp            play.Map
+	messages        Messages
+	sounds          Messages
+	topPacket       uint16
+	lastDir         string // Not sure if we can query this instead...
 }
 
 func (p *Play) Init(game Game) (tidy func()) {
@@ -95,6 +96,8 @@ func (p *Play) Init(game Game) (tidy func()) {
 	flex.SetFocusFunc(func() {
 		game.App().SetFocus(p.mapp.View)
 	})
+
+	p.objectDebugView.Init()
 
 	left := tview.NewFlex()
 	left.SetDirection(tview.FlexRow)
@@ -237,9 +240,19 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	game.Pages().AddPage("inventory", p.inventory.GetContainer(), true, true)
 
+	game.Pages().AddPage("objectDebug", p.objectDebugView.GetContainer(), true, true)
+	p.objectDebugView.GetContainer().SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEsc {
+			game.Pages().SwitchToPage("play")
+		}
+		return event
+	})
+
 	game.Pages().SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			game.Pages().SwitchToPage("play")
+		} else if event.Key() == tcell.KeyF1 {
+			game.Pages().SwitchToPage("objectDebug")
 		}
 		return event
 	})
@@ -277,6 +290,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			r = rune(m.Name[0])
 		}
 		play.FaceToRuneMap[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
+		p.objectDebugView.Refresh()
 	})
 
 	p.On(&messages.MessageSmooth{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
