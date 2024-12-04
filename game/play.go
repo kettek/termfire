@@ -261,7 +261,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			game.SendMessage(&messages.MessageAskFace{Face: uint32(m.Num)})
 		}
 
-		r, fg, bg := play.GlobalObjectMapper.GetRuneAndColors(m.Name)
+		r, fg, bg := play.GlobalObjectMapper.GetRuneAndColors(m.Name[:len(m.Name)-4])
 		if r == 0 {
 			r = rune(m.Name[0])
 		}
