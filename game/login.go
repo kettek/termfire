@@ -3,6 +3,7 @@ package game
 import (
 	"os"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/game/play"
 	"github.com/kettek/termfire/messages"
@@ -53,8 +54,10 @@ func (l *Login) Init(game Game) (tidy func()) {
 		// We need to add any messages here to our face to rune map cache, as otherwise they'll be lost to the void.
 		l.On(&messages.MessageFace2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 			m := msg.(*messages.MessageFace2)
-			r := play.NameToTile(m.Name)
-			play.FaceToRuneMap[uint16(m.Num)] = r
+
+			r, fg, bg := play.GlobalObjectMapper.GetRuneAndColors(m.Name)
+			play.FaceToRuneMap[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
+
 			debug.Debug("face2!", msg.Value())
 		})
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/kettek/termfire/assets"
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/game/play"
 	"github.com/kettek/termfire/messages"
@@ -74,6 +75,13 @@ func (p *Play) Init(game Game) (tidy func()) {
 		debug.Debug("bad character!")
 		// TODO: Boot back to Login, but with a preserved login state...
 	})
+
+	// Load in our tilemap to objectMapper
+	tbytes, err := assets.FS.ReadFile("tilemap.txt")
+	if err != nil {
+		panic(err)
+	}
+	play.GlobalObjectMapper.UnmarshalBinary(tbytes)
 
 	// Setup our UI.
 	flex := tview.NewFlex()
@@ -253,8 +261,11 @@ func (p *Play) Init(game Game) (tidy func()) {
 			game.SendMessage(&messages.MessageAskFace{Face: uint32(m.Num)})
 		}
 
-		r := play.NameToTile(m.Name)
-		play.FaceToRuneMap[uint16(m.Num)] = r
+		r, fg, bg := play.GlobalObjectMapper.GetRuneAndColors(m.Name)
+		if r == 0 {
+			r = rune(m.Name[0])
+		}
+		play.FaceToRuneMap[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
 	})
 
 	p.On(&messages.MessageSmooth{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {

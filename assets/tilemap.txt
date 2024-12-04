@@ -1,0 +1,44 @@
+// Rune mappings, in the format of <rune> <string>[ <string>...]
+█ wall mine
+▓ window
+· floor tile cobble
+░ dirt grass stone farm brush
+~ water
+¢ coin
++ door
+‡ gate
+h chair
+& bed
+T table
+/ lever switch
+! book scroll card
+¶ sign crossroad
+⌂ fountain
+= bridge
+# church shop tower house hall guild inn jail shrine temple
+† altar
+//≈ fog this breaks windows...
+¤ amulet
+¥ talisman
+° ring
+< well hole
+> stair
+, corpse flesh body arm leg foot head tongue eye finger
+◘ mat
+
+// Color mappings, in the format of <string> <foreground>[,weight] <background>[,weight] [<rune override>[,weight]]
+wall white white
+mine gray darkgray
+grass green lightgreen
+brush darkgreen lightgreen
+stone gray darkgray
+farm gold brown
+wood darkbrown brown
+iron gray
+stone gray lightgray
+bed red lightred
+sign,crossroad white black
+fountain blue lightgray
+altar gold white
+fog white
+bridge darkbrown brown
