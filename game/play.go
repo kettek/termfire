@@ -28,6 +28,7 @@ var cfToW3CColor = map[messages.MessageColor]tcell.Color{
 	messages.MessageColorBrown:      tcell.ColorBrown,
 	messages.MessageColorGold:       tcell.ColorGold,
 	messages.MessageColorTan:        tcell.ColorTan,
+	messages.MessageColorAltBlack:   tcell.ColorDarkGray,
 }
 
 type Messages struct {
@@ -43,6 +44,11 @@ func (m *Messages) Init() {
 }
 
 func (m *Messages) Add(msg string, color messages.MessageColor) {
+	// Most terminals are black background, so I guess we can swap black to something else...
+	if color == messages.MessageColorBlack {
+		color = messages.MessageColorAltBlack
+	}
+
 	colorizedText := fmt.Sprintf("[%s]%s[%s]", cfToW3CColor[color], msg, cfToW3CColor[messages.MessageColorWhite])
 
 	txt := m.view.GetText(false)
@@ -205,6 +211,11 @@ func (p *Play) Init(game Game) (tidy func()) {
 			screen.SetContent(x+cx+1, y+cy+1, '→', nil, tcell.StyleDefault)
 		}
 	})
+	p.mapp.SetOnClick(func(button int, x, y int) {
+		dx := x - p.mapp.CenterX() - 1
+		dy := y - p.mapp.CenterY() - 1
+		game.SendMessage(&messages.MessageLookAt{DX: dx, DY: dy})
+	})
 
 	middle.AddItem(p.mapp.View, 0, 1, true)
 
@@ -273,7 +284,6 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageDrawExtInfo{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageDrawExtInfo)
-		debug.Debug("draw ext info!", m)
 		p.messages.Add(m.Message, m.Color)
 		game.Redraw()
 	})
