@@ -21,6 +21,7 @@ const (
 	MessageColorGold                    = 11
 	MessageColorTan                     = 12
 	MessageColorMax                     = 12
+	MessageColorAltBlack                = 13
 	MessageColorMask                    = 0xff
 	// Control flags
 	MessageUnique      = 0x100
@@ -336,7 +337,7 @@ func (m MessageDrawExtInfo) Kind() string {
 }
 
 func (m MessageDrawExtInfo) Value() string {
-	return strconv.Itoa(int(m.Color)) + " " + strconv.Itoa(int(m.Type)) + " " + strconv.Itoa(int(m.Subtype)) + " " + m.Message
+	return "c: " + strconv.Itoa(int(m.Color)) + " " + "t: " + strconv.Itoa(int(m.Type)) + " " + "s: " + strconv.Itoa(int(m.Subtype)) + " " + m.Message
 }
 
 func (m MessageDrawExtInfo) Bytes() []byte {
