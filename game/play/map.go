@@ -39,6 +39,7 @@ type Map struct {
 	viewHeight int
 	onResize   func(width, height int)
 	onPostDraw func(screen tcell.Screen, x, y, width, height int)
+	onClick    func(button int, x, y int)
 }
 
 func (m *Map) SetOnResize(onResize func(width, height int)) {
@@ -47,6 +48,10 @@ func (m *Map) SetOnResize(onResize func(width, height int)) {
 
 func (m *Map) SetOnPostDraw(onPostDraw func(screen tcell.Screen, x, y, width, height int)) {
 	m.onPostDraw = onPostDraw
+}
+
+func (m *Map) SetOnClick(onClick func(button int, x, y int)) {
+	m.onClick = onClick
 }
 
 func (m *Map) CenterX() int {
@@ -100,6 +105,21 @@ func (m *Map) Init() {
 			m.onPostDraw(screen, x, y, width, height)
 		}
 		return x, y, width, height
+	})
+	m.View.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		wx, wy, ww, wh := m.View.GetInnerRect()
+		x, y := event.Position()
+		x -= wx
+		y -= wy
+		if x < 0 || y < 0 || x >= ww || y >= wh {
+			return action, event
+		}
+		if action == tview.MouseLeftClick {
+			if m.onClick != nil {
+				m.onClick(int(event.Buttons()), x, y)
+			}
+		}
+		return action, event
 	})
 }
 
