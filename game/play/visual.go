@@ -156,9 +156,11 @@ func (t *RuneDefinition) UnmarshalBinary(data []byte) error {
 				start = i + 1
 			}
 		case 1: // strings
-			if d[i] == ' ' || i == len(d)-1 {
+			if d[i] == ' ' {
 				t.Strings = append(t.Strings, d[start:i])
 				start = i + 1
+			} else if i == len(d)-1 {
+				t.Strings = append(t.Strings, d[start:i+1])
 			}
 		}
 	}
@@ -200,18 +202,20 @@ func (t *ObjectMap) UnmarshalBinary(data []byte) error {
 		case 1: // foreground,weight
 			switch submode {
 			case 0: // foreground
-				if d[i] == ',' || i == len(d)-1 {
+				if d[i] == ',' {
 					t.Foreground.Color = d[start:i]
 					start = i + 1
 					submode = 1
-				} else if d[i] == ' ' || i == len(d)-1 {
+				} else if d[i] == ' ' {
 					t.Foreground.Color = d[start:i]
 					start = i + 1
 					submode = 0
 					mode = 2
+				} else if i == len(d)-1 {
+					t.Foreground.Color = d[start : i+1]
 				}
 			case 1: // weight
-				if d[i] == ' ' || i == len(d)-1 {
+				if d[i] == ' ' {
 					w, err := strconv.ParseFloat(d[start:i], 64)
 					if err != nil {
 						return err
@@ -220,6 +224,12 @@ func (t *ObjectMap) UnmarshalBinary(data []byte) error {
 					start = i + 1
 					submode = 0
 					mode = 2
+				} else if i == len(d)-1 {
+					w, err := strconv.ParseFloat(d[start:i+1], 64)
+					if err != nil {
+						return err
+					}
+					t.Foreground.Weight = w
 				}
 			}
 		case 2: // background,weight
@@ -229,14 +239,16 @@ func (t *ObjectMap) UnmarshalBinary(data []byte) error {
 					t.Background.Color = d[start:i]
 					start = i + 1
 					submode = 1
-				} else if d[i] == ' ' || i == len(d)-1 {
+				} else if d[i] == ' ' {
 					t.Background.Color = d[start:i]
 					start = i + 1
 					submode = 0
 					mode = 3
+				} else if i == len(d)-1 {
+					t.Background.Color = d[start : i+1]
 				}
 			case 1: // weight
-				if d[i] == ' ' || i == len(d)-1 {
+				if d[i] == ' ' {
 					w, err := strconv.ParseFloat(d[start:i], 64)
 					if err != nil {
 						return err
@@ -245,22 +257,30 @@ func (t *ObjectMap) UnmarshalBinary(data []byte) error {
 					start = i + 1
 					submode = 0
 					mode = 3
+				} else if i == len(d)-1 {
+					w, err := strconv.ParseFloat(d[start:i+1], 64)
+					if err != nil {
+						return err
+					}
+					t.Background.Weight = w
 				}
 			}
 		case 3: // rune,weight
 			switch submode {
 			case 0: // rune
-				if d[i] == ',' || i == len(d)-1 {
+				if d[i] == ',' {
 					t.Rune.Value = rune(d[start:i][0])
 					start = i + 1
 					submode = 1
-				} else if d[i] == ' ' || i == len(d)-1 {
+				} else if d[i] == ' ' {
 					t.Rune.Value = rune(d[start:i][0])
 					start = i + 1
 					submode = 0
+				} else if i == len(d)-1 {
+					t.Rune.Value = rune(d[start : i+1][0])
 				}
 			case 1: // weight
-				if d[i] == ' ' || i == len(d)-1 {
+				if d[i] == ' ' {
 					w, err := strconv.ParseFloat(d[start:i], 64)
 					if err != nil {
 						return err
@@ -268,6 +288,12 @@ func (t *ObjectMap) UnmarshalBinary(data []byte) error {
 					t.Rune.Weight = w
 					start = i + 1
 					submode = 0
+				} else if i == len(d)-1 {
+					w, err := strconv.ParseFloat(d[start:i+1], 64)
+					if err != nil {
+						return err
+					}
+					t.Rune.Weight = w
 				}
 			}
 		}
