@@ -1,36 +1,46 @@
 // Rune mappings, in the format of <rune> <string>[ <string>...]
-█ wall mine
+//█ wall mine
+# wall mine
 ▓ window
-· floor tile cobble
-░ dirt grass stone farm brush
+· floor tile shop_empty
+░ dirt grass stone farmland brush hills desert cobble
 ~ water
 ¢ coin
 + door
-‡ gate
+‡ gate grate
 h chair
 & bed
 T table
-/ lever switch
+/ lever switch handle
 ! book scroll card
+¿ potion
 ¶ sign crossroad
 ⌂ fountain
 = bridge
-# church shop tower house hall guild inn jail shrine temple
+▲ church shop tower house hall guild inn jail shrine temple farm
+//# church shop tower house hall guild inn jail shrine temple farm
 † altar
-//≈ fog this breaks windows...
+$ conver
+≈ fog this breaks windows...
 ¤ amulet
 ¥ talisman
 ° ring
 < well hole
-> stair
+> stair ladder
 , corpse flesh body arm leg foot head tongue eye finger
 ◘ mat
+¬ key
+^ mountain moun
+♠ tree jungle woods
+♣ bush
 
 // Color mappings, in the format of <string> <foreground>[,weight] <background>[,weight] [<rune override>[,weight]]
 wall white white
+cwall black gray
+swall black lightgray
 mine gray darkgray
-grass green lightgreen
-brush darkgreen lightgreen
+grass lightgreen green
+brush darkgreen green
 stone gray darkgray
 farm gold brown
 wood darkbrown brown
@@ -41,4 +51,12 @@ sign,crossroad white black
 fountain blue lightgray
 altar gold white
 fog white
-bridge darkbrown brown
+bridge brown
+woods brown green
+tree darkgreen green
+shop yellow black
+mountain white darkgray
+hills lightgreen green
+hillsrocky gray green
+desert gold yellow
+cobble lightgray darkgray
