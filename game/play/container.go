@@ -60,7 +60,11 @@ func (c *Container) SetOnTrigger(onTrigger func(button string, object messages.I
 
 func (c *Container) AddItem(obj messages.ItemObject) {
 	c.items = append(c.items, obj)
-	c.listView.AddItem(obj.GetName(), "", 0, nil)
+	name := obj.GetName()
+	if r, ok := FaceToRuneMap[uint16(obj.Face)]; ok {
+		name = string(r.R) + " " + name
+	}
+	c.listView.AddItem(name, "", 0, nil)
 }
 
 func (c *Container) UpdateItem(obj messages.ItemObject) {
