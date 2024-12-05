@@ -275,7 +275,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageImage2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageImage2)
-		play.FaceToSizeMap[uint16(m.Face)] = play.RuneSize{Width: uint8(m.Width / 32), Height: uint8(m.Height / 32)}
+		play.GlobalObjectMapper.FaceToSize[uint16(m.Face)] = play.RuneSize{Width: uint8(m.Width / 32), Height: uint8(m.Height / 32)}
 	})
 
 	p.On(&messages.MessageFace2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
@@ -289,7 +289,8 @@ func (p *Play) Init(game Game) (tidy func()) {
 		if r == 0 {
 			r = rune(m.Name[0])
 		}
-		play.FaceToRuneMap[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
+		play.GlobalObjectMapper.FaceToName[uint16(m.Num)] = m.Name
+		play.GlobalObjectMapper.FaceToRune[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
 		p.objectDebugView.Refresh()
 	})
 
@@ -397,13 +398,13 @@ func (p *Play) Init(game Game) (tidy func()) {
 				case *messages.MessageMap2CoordDataClear:
 					p.mapp.ClearCell(m.X, m.Y)
 				case *messages.MessageMap2CoordDataImage:
-					t, ok := play.FaceToRuneMap[d.FaceNum]
+					t, ok := play.GlobalObjectMapper.FaceToRune[d.FaceNum]
 					if !ok {
 						t = play.MapTile{'?', tcell.ColorWhite, tcell.ColorBlack}
 					}
 					if d.FaceNum == 0 {
 						p.mapp.RemoveCellLayer(m.X, m.Y, int(d.Layer))
-						if size, ok := play.FaceToSizeMap[d.FaceNum]; ok {
+						if size, ok := play.GlobalObjectMapper.FaceToSize[d.FaceNum]; ok {
 							for x := 0; x < int(size.Width); x++ {
 								for y := 0; y < int(size.Height); y++ {
 									p.mapp.RemoveCellLayer(m.X-x, m.Y-y, int(d.Layer))
@@ -416,7 +417,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 							t     play.MapTile
 							layer int
 						}{m.X, m.Y, t, int(d.Layer)})
-						if size, ok := play.FaceToSizeMap[d.FaceNum]; ok {
+						if size, ok := play.GlobalObjectMapper.FaceToSize[d.FaceNum]; ok {
 							for x := 0; x < int(size.Width); x++ {
 								for y := 0; y < int(size.Height); y++ {
 									setChanges = append(setChanges, struct {

@@ -24,7 +24,9 @@ func (v *ObjectDebugView) GetContainer() *tview.Flex {
 func (v *ObjectDebugView) Refresh() {
 	v.list.Clear()
 
-	for _, r := range FaceToRuneMap {
-		v.list.AddItem(string(r.R), r.F.String()+" "+r.B.String(), 0, nil)
+	for f, r := range GlobalObjectMapper.FaceToRune {
+		str1 := string(r.R) + " " + GlobalObjectMapper.FaceToName[f]
+		str2 := r.F.String() + " " + r.B.String()
+		v.list.AddItem(str1, str2, 0, nil)
 	}
 }

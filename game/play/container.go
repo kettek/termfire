@@ -61,7 +61,7 @@ func (c *Container) SetOnTrigger(onTrigger func(button string, object messages.I
 func (c *Container) AddItem(obj messages.ItemObject) {
 	c.items = append(c.items, obj)
 	name := obj.GetName()
-	if r, ok := FaceToRuneMap[uint16(obj.Face)]; ok {
+	if r, ok := GlobalObjectMapper.FaceToRune[uint16(obj.Face)]; ok {
 		name = string(r.R) + " " + name
 	}
 	c.listView.AddItem(name, "", 0, nil)

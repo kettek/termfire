@@ -21,7 +21,7 @@ func (l *Login) Init(game Game) (tidy func()) {
 	password := os.Args[3]
 
 	// Clear out our face cache.
-	play.ResetFaceToRuneMap()
+	play.GlobalObjectMapper.Reset()
 
 	l.Once(&messages.MessageVersion{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageVersion)
@@ -56,7 +56,7 @@ func (l *Login) Init(game Game) (tidy func()) {
 			m := msg.(*messages.MessageFace2)
 
 			r, fg, bg := play.GlobalObjectMapper.GetRuneAndColors(m.Name)
-			play.FaceToRuneMap[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
+			play.GlobalObjectMapper.FaceToRune[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
 
 			debug.Debug("face2!", msg.Value())
 		})
