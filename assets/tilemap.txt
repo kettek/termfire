@@ -12,6 +12,8 @@
 & bed
 ┯ table
 / lever switch handle
+× button
+£ chest
 ! book scroll card
 ¿ potion
 ¶ sign crossroad
@@ -25,6 +27,8 @@ $ conver
 ¤ amulet
 ¥ talisman
 ° ring
+¦ arrow
+¨ food
 < well hole
 > stair ladder
 , corpse flesh body arm leg foot head tongue eye finger
