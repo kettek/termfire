@@ -12,8 +12,8 @@
 & bed
 ┯ table
 / lever switch handle
-× button
-£ chest
+◙ button
+▄ chest
 ! book scroll card
 ¿ potion
 ¶ sign crossroad
@@ -37,6 +37,7 @@ $ conver
 ^ mountain moun
 ♠ tree jungle woods
 ♣ bush
+∩ arch
 
 // Color mappings, in the format of <string> <foreground>[,weight] <background>[,weight] [<rune override>[,weight]]
 wall white white
