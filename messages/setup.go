@@ -160,7 +160,7 @@ func (m MessageSetup) Bytes() []byte {
 	result = append(result, []byte(m.Kind())...)
 	if m.ExtendedStats.Use {
 		result = append(result, ' ')
-		result = append(result, []byte("extendedstats")...)
+		result = append(result, []byte("extended_stats")...)
 		result = append(result, ' ')
 		result = append(result, '1')
 	}
