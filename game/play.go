@@ -14,23 +14,6 @@ import (
 	"github.com/rivo/tview"
 )
 
-var cfToW3CColor = map[messages.MessageColor]tcell.Color{
-	messages.MessageColorBlack:      tcell.ColorBlack,
-	messages.MessageColorWhite:      tcell.ColorWhite,
-	messages.MessageColorNavy:       tcell.ColorNavy,
-	messages.MessageColorRed:        tcell.ColorRed,
-	messages.MessageColorOrange:     tcell.ColorOrange,
-	messages.MessageColorBlue:       tcell.ColorBlue,
-	messages.MessageColorDarkOrange: tcell.ColorDarkOrange,
-	messages.MessageColorGreen:      tcell.ColorGreen,
-	messages.MessageColorLightGreen: tcell.ColorLightGreen,
-	messages.MessageColorGrey:       tcell.ColorGrey,
-	messages.MessageColorBrown:      tcell.ColorBrown,
-	messages.MessageColorGold:       tcell.ColorGold,
-	messages.MessageColorTan:        tcell.ColorTan,
-	messages.MessageColorAltBlack:   tcell.ColorDarkGray,
-}
-
 type Messages struct {
 	view *tview.TextView
 }
@@ -49,7 +32,7 @@ func (m *Messages) Add(msg string, color messages.MessageColor) {
 		color = messages.MessageColorAltBlack
 	}
 
-	colorizedText := fmt.Sprintf("[%s]%s[%s]", cfToW3CColor[color], msg, cfToW3CColor[messages.MessageColorWhite])
+	colorizedText := fmt.Sprintf("[%s]%s[%s]", play.CF2W3CColor[color], msg, play.CF2W3CColor[messages.MessageColorWhite])
 
 	txt := m.view.GetText(false)
 	m.view.SetText(txt + "\n" + colorizedText)
@@ -64,7 +47,7 @@ type Play struct {
 	objectDebugView play.ObjectDebugView
 	inventory       play.Container
 	ground          play.Container
-	status          *tview.TextView
+	status          play.Status
 	input           *tview.InputField
 	mapp            play.Map
 	messages        Messages
@@ -102,10 +85,8 @@ func (p *Play) Init(game Game) (tidy func()) {
 	left := tview.NewFlex()
 	left.SetDirection(tview.FlexRow)
 
-	p.status = tview.NewTextView()
-	p.status.SetBorder(true)
-	p.status.SetTitle("Status")
-	left.AddItem(p.status, 0, 2, false)
+	p.status.Init()
+	left.AddItem(p.status.View, 0, 2, false)
 
 	middle := tview.NewFlex()
 	middle.SetBorder(false)
@@ -334,13 +315,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageStats{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageStats)
-		debug.Debug("stats!", msg.Value())
-		for _, stat := range m.Stats {
-			switch s := stat.(type) {
-			case *messages.MessageStatStr:
-				debug.Debug("str: ", *s)
-			}
-		}
+		p.status.Update(m)
 	})
 
 	p.On(&messages.MessageSound{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
