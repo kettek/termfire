@@ -6,6 +6,7 @@
 ░ dirt grass stone farmland brush hills desert cobble
 ~ water
 ¢ coin
+º pearl ruby
 + door
 ‡ gate grate
 ┕ chair
@@ -17,7 +18,7 @@
 ! book scroll card
 ¿ potion
 ¶ sign crossroad
-⌂ fountain
+⌂ fountain statue
 = bridge
 ▲ church shop tower house hall guild inn jail shrine temple farm
 //# church shop tower house hall guild inn jail shrine temple farm
@@ -28,12 +29,13 @@ $ conver
 ¥ talisman
 ° ring
 ¦ arrow
-¨ food
+¨ food waybread
 < well hole
 > stair ladder
 , corpse flesh body arm leg foot head tongue eye finger
 ◘ mat
 ¬ key
+ï sword hammer club axe katana dagger sabre
 ^ mountain moun
 ♠ tree jungle woods
 ♣ bush
