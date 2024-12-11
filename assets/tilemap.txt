@@ -6,7 +6,7 @@
 ░ dirt grass stone farmland brush hills desert cobble
 ~ water
 ¢ coin
-º pearl ruby
+º pearl ruby sapphire diamond emerald
 + door
 ‡ gate grate
 ┕ chair
@@ -26,20 +26,24 @@
 $ conver
 ≈ fog
 ¤ amulet
-¥ talisman
+¥ talisman symbol
 ° ring
-¦ arrow
+¦ arrow bolt
 ¨ food waybread
 < well hole
 > stair ladder
 , corpse flesh body arm leg foot head tongue eye finger
 ◘ mat
 ¬ key
-ï sword hammer club axe katana dagger sabre
+ï sword hammer stonehamme club axe katana dagger sabre sickle magnifier staff mace falchion mornstar
+î wand staff
 ^ mountain moun
 ♠ tree jungle woods
 ♣ bush
 ∩ arch
+) bow crossbow
+» boots shoe
+↨ quiver
 
 // Color mappings, in the format of <string> <foreground>[,weight] <background>[,weight] [<rune override>[,weight]]
 wall white white
