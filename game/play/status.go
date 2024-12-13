@@ -37,6 +37,20 @@ type Status struct {
 	baseCharisma     int
 }
 
+func getRatioString(value int, maxValue int, width int) string {
+	ratio := float64(value) / float64(maxValue)
+	var line string
+	var remainingLine string
+	for i := 0; i < width; i++ {
+		if float64(i) < float64(width)*ratio {
+			line += "█"
+		} else {
+			remainingLine += "░"
+		}
+	}
+	return line + "[gray]" + remainingLine
+}
+
 func (s *Status) Init() {
 	s.View = tview.NewBox()
 
@@ -44,11 +58,20 @@ func (s *Status) Init() {
 		tview.Print(screen, s.title, x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorTan])
 		y++
 		// Status
-		tview.Print(screen, fmt.Sprintf("HP: %d/%d", s.hp, s.maxHP), x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorGreen])
+		tview.Print(screen, fmt.Sprintf("HP: %d/%d", s.hp, s.maxHP), x, y, width, tview.AlignCenter, CF2W3CColor[messages.MessageColorGreen])
 		y++
-		tview.Print(screen, fmt.Sprintf("SP: %d/%d", s.sp, s.maxSP), x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorGreen])
+		hpLine := getRatioString(s.hp, s.maxHP, width)
+		tview.Print(screen, "[red]"+hpLine, x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorGreen])
 		y++
-		tview.Print(screen, fmt.Sprintf("Grace: %d/%d", s.grace, s.maxGrace), x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorGreen])
+		tview.Print(screen, fmt.Sprintf("SP: %d/%d", s.sp, s.maxSP), x, y, width, tview.AlignCenter, CF2W3CColor[messages.MessageColorGreen])
+		y++
+		spLine := getRatioString(s.sp, s.maxSP, width)
+		tview.Print(screen, "[blue]"+spLine, x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorGreen])
+		y++
+		tview.Print(screen, fmt.Sprintf("Grace: %d/%d", s.grace, s.maxGrace), x, y, width, tview.AlignCenter, CF2W3CColor[messages.MessageColorGreen])
+		y++
+		graceLine := getRatioString(s.grace, s.maxGrace, width)
+		tview.Print(screen, "[yellow]"+graceLine, x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorGreen])
 		y++
 		// Stats
 		tview.Print(screen, fmt.Sprintf("Str: %d (%d)", s.strength, s.baseStrength), x, y, width, tview.AlignLeft, CF2W3CColor[messages.MessageColorGreen])
