@@ -1,5 +1,7 @@
 package messages
 
+import "fmt"
+
 type MessageAnim struct {
 	AnimID uint16
 	Flags  uint16
@@ -30,6 +32,10 @@ func (m MessageAnim) Kind() string {
 
 func (m MessageAnim) Value() string {
 	return ""
+}
+
+func (m MessageAnim) String() string {
+	return fmt.Sprintf("AnimID: %d, Flags: %d, Faces: %v", m.AnimID, m.Flags, m.Faces)
 }
 
 func init() {

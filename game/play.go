@@ -254,6 +254,11 @@ func (p *Play) Init(game Game) (tidy func()) {
 		p.mapp.Clear()
 	})
 
+	p.On(&messages.MessageAnim{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
+		m := msg.(*messages.MessageAnim)
+		play.GlobalObjectMapper.AnimToFaces[m.AnimID] = m.Faces
+	})
+
 	p.On(&messages.MessageImage2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageImage2)
 		play.GlobalObjectMapper.FaceToSize[uint16(m.Face)] = play.RuneSize{Width: uint8(m.Width / 32), Height: uint8(m.Height / 32)}
@@ -372,6 +377,18 @@ func (p *Play) Init(game Game) (tidy func()) {
 				switch d := c.(type) {
 				case *messages.MessageMap2CoordDataClear:
 					p.mapp.ClearCell(m.X, m.Y)
+				case *messages.MessageMap2CoordDataClearLayer:
+					p.mapp.RemoveCellLayer(m.X, m.Y, int(d.Layer))
+				case *messages.MessageMap2CoordDataAnim:
+					if faces, ok := play.GlobalObjectMapper.AnimToFaces[d.Anim]; ok && len(faces) > 0 {
+						setChanges = append(setChanges, struct {
+							x, y  int
+							t     play.MapTile
+							layer int
+						}{m.X, m.Y, play.GlobalObjectMapper.FaceToRune[faces[0]], int(d.Layer)})
+					}
+				case *messages.MessageMap2CoordDataDarkness:
+					//debug.Debug("darkness: ", d)
 				case *messages.MessageMap2CoordDataImage:
 					t, ok := play.GlobalObjectMapper.FaceToRune[d.FaceNum]
 					if !ok {
