@@ -3,8 +3,8 @@
 # wall mine
 ▓ window
 · floor tile shop_empty
-░ dirt grass stone farmland brush hills desert cobble
-~ water
+░ dirt grass stone farmland brush hills desert cobble beach
+~ water sea shallow_sea river branch
 ¢ coin
 º pearl ruby sapphire diamond emerald
 + door
@@ -22,8 +22,8 @@
 ¿ potion
 ¶ sign crossroad
 ⌂ fountain statue
-= bridge
-▲ church shop tower house hall guild inn jail shrine temple farm
+= bridge pier
+▲ church shop tower house ^hall guild inn jail shrine temple farm(?!land)
 //# church shop tower house hall guild inn jail shrine temple farm
 † altar
 $ conver
@@ -35,13 +35,13 @@ $ conver
 ¨ food waybread
 < well hole
 > stair ladder
-, corpse flesh body arm leg foot head tongue eye finger
+, corpse flesh body ^arm leg foot head tongue eye finger
 ◘ mat
 ¬ key
 ï sword hammer stonehamme club axe katana dagger sabre sickle magnifier staff mace falchion mornstar
 î wand staff
 ^ mountain moun
-♠ tree jungle woods
+♠ tree jungle woods evergreen
 ♣ bush
 ∩ arch
 ) bow crossbow
@@ -63,14 +63,19 @@ stone gray lightgray
 bed red lightred
 sign,crossroad white black
 fountain blue lightgray
+sea lightblue darkblue
+shallow_sea blue blue
+river,branch white lightblue
 altar gold white
 fog white
 bridge brown
 woods brown green
 tree darkgreen green
+jungle green darkgreen
 shop yellow black
 mountain white darkgray
 hills lightgreen green
 hillsrocky gray green
-desert gold yellow
+desert yellow gold
+beach gold yellow
 cobble lightgray darkgray
