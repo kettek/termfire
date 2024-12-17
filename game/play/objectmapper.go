@@ -1,7 +1,7 @@
 package play
 
 import (
-	"slices"
+	"regexp"
 	"strings"
 )
 
@@ -57,7 +57,8 @@ func (m *ObjectMapper) GetRuneAndColors(name string) (rune, string, string) {
 				exact = true
 				results = []RuneDefinition{d}
 				break
-			} else if strings.Contains(name, s) {
+			} else if match, _ := regexp.MatchString(s, name); match {
+				//} else if strings.Contains(name, s) {
 				results = append(results, d)
 			}
 		}
@@ -67,13 +68,14 @@ func (m *ObjectMapper) GetRuneAndColors(name string) (rune, string, string) {
 	}
 
 	// Get our best possible name match.
-	if len(results) > 1 {
+	/*if len(results) > 1 {
 		slices.SortFunc(results, func(a RuneDefinition, b RuneDefinition) int {
 			// Get the closest string for a.
 			var aClosest string
 			var aClosestDistance int
 			for _, s := range a.Strings {
-				if strings.Contains(name, s) {
+				//if strings.Contains(name, s) {
+				if match, _ := regexp.MatchString(s, name); match {
 					if aClosest == "" {
 						aClosest = s
 						aClosestDistance = len(s) - len(name)
@@ -89,7 +91,8 @@ func (m *ObjectMapper) GetRuneAndColors(name string) (rune, string, string) {
 			var bClosest string
 			var bClosestDistance int
 			for _, s := range b.Strings {
-				if strings.Contains(name, s) {
+				//	if strings.Contains(name, s) {
+				if match, _ := regexp.MatchString(s, name); match {
 					if bClosest == "" {
 						bClosest = s
 						bClosestDistance = len(s) - len(name)
@@ -103,7 +106,7 @@ func (m *ObjectMapper) GetRuneAndColors(name string) (rune, string, string) {
 			}
 			return aClosestDistance - bClosestDistance
 		})
-	}
+	}*/
 
 	var bestRuneWeight float64
 	var bestRune rune
@@ -132,7 +135,7 @@ func (m *ObjectMapper) GetRuneAndColors(name string) (rune, string, string) {
 	}
 
 	if bestRune == 0 && len(results) > 0 {
-		bestRune = results[0].Rune
+		bestRune = results[len(results)-1].Rune
 	}
 
 	return bestRune, bestForeground, bestBackground
