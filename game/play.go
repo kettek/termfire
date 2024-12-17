@@ -147,22 +147,42 @@ func (p *Play) Init(game Game) (tidy func()) {
 		})
 	})
 	p.mapp.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		var msg *messages.MessageCommand
+		//debug.Debug("event: ", event.Key(), event.Rune(), event.Modifiers(), event.Name())
+
+		firing := false
+
+		// Add run for directional ctrl.
+		if event.Key() >= tcell.KeyUp && event.Key() <= tcell.KeyLeft {
+			if event.Modifiers() == tcell.ModShift {
+				firing = true
+			} else if event.Modifiers() == tcell.ModCtrl {
+				p.SendCommand(&messages.MessageCommand{Command: "run"})
+			} else {
+				p.SendCommand(&messages.MessageCommand{Command: "run_stop"})
+			}
+		}
+
+		cmd := ""
+
+		if firing {
+			cmd = "fire "
+		}
+
 		if event.Key() == tcell.KeyUp {
-			msg = &messages.MessageCommand{Command: "north"}
+			cmd += "north"
 			p.lastDir = "north"
 		} else if event.Key() == tcell.KeyDown {
-			msg = &messages.MessageCommand{Command: "south"}
+			cmd += "south"
 			p.lastDir = "south"
 		} else if event.Key() == tcell.KeyLeft {
-			msg = &messages.MessageCommand{Command: "west"}
+			cmd += "west"
 			p.lastDir = "west"
 		} else if event.Key() == tcell.KeyRight {
-			msg = &messages.MessageCommand{Command: "east"}
+			cmd += "east"
 			p.lastDir = "east"
 		} else if event.Key() == tcell.KeyRune {
 			if event.Rune() == 'a' {
-				msg = &messages.MessageCommand{Command: "apply"}
+				cmd = "apply"
 			} else if event.Rune() == '\'' {
 				game.App().SetFocus(p.input)
 			} else if event.Rune() == 'i' {
@@ -172,12 +192,15 @@ func (p *Play) Init(game Game) (tidy func()) {
 				}
 			}
 		}
-		if msg != nil {
-			msg.Packet = p.topPacket
-			msg.Repeat = 1
-			p.topPacket++
-			game.SendMessage(msg)
+
+		if cmd != "" {
+			p.SendCommand(&messages.MessageCommand{Command: cmd})
 		}
+
+		if firing {
+			p.SendCommand(&messages.MessageCommand{Command: "fire_stop"})
+		}
+
 		return event
 	})
 	p.mapp.SetOnPostDraw(func(screen tcell.Screen, x, y, width, height int) {
@@ -390,6 +413,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 				case *messages.MessageMap2CoordDataDarkness:
 					//debug.Debug("darkness: ", d)
 				case *messages.MessageMap2CoordDataImage:
+					//debug.Debug("image: ", d)
 					t, ok := play.GlobalObjectMapper.FaceToRune[d.FaceNum]
 					if !ok {
 						t = play.MapTile{'?', tcell.ColorWhite, tcell.ColorBlack}
@@ -455,4 +479,12 @@ func (p *Play) OnMessage(m messages.Message) {
 		return
 	}
 	p.MessageHandler.OnMessage(m)
+}
+
+func (p *Play) SendCommand(msg *messages.MessageCommand) {
+	//debug.Debug("command: ", msg.Command)
+	msg.Packet = p.topPacket
+	//msg.Repeat = 1
+	p.topPacket++
+	p.game.SendMessage(msg)
 }
