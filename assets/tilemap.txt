@@ -15,6 +15,7 @@
 & bed
 ┯ table
 / lever switch handle
+\ (lever|switch|handle)([^.]*).112
 ◙ button
 ▄ chest
 ! book scroll card
