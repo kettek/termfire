@@ -3,6 +3,8 @@ package messages
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/kettek/termfire/debug"
 )
 
 type MessageMap2CoordType uint16
@@ -18,6 +20,10 @@ type MessageMap2CoordData interface {
 type MessageMap2CoordDataClear struct {
 }
 
+type MessageMap2CoordDataClearLayer struct {
+	Layer uint8
+}
+
 type MessageMap2CoordDataDarkness struct {
 	Darkness uint8
 }
@@ -29,6 +35,18 @@ type MessageMap2CoordDataImage struct {
 	AnimSpeed    uint8
 	HasSmooth    bool
 	Smooth       uint8
+}
+
+type MessageMap2CoordDataAnim struct {
+	Layer  uint8
+	Anim   uint16
+	Flags  uint8
+	Speed  uint8
+	Smooth uint8
+}
+
+func (m MessageMap2CoordDataAnim) String() string {
+	return fmt.Sprintf("Layer: %d, Anim: %d, Flags: %d, Speed: %d, Smooth: %d", m.Layer, m.Anim, m.Flags, m.Speed, m.Smooth)
 }
 
 func (m MessageMap2CoordDataImage) String() string {
@@ -78,7 +96,13 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 	m.Y = (int((coord) >> 4 & 0x3F)) - 15
 	// Type is LSB 0-3
 	m.Type = MessageMap2CoordType(coord & 0x3)
+	//m.Type = MessageMap2CoordType(coord & 0x0f)
 	offset += 2
+
+	if m.Type&0x01 != 0 {
+		// Just scroll information
+		return offset, nil
+	}
 
 	for offset < len(data) {
 		var lenType uint8
@@ -91,31 +115,48 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 
 		// len is the top 3 bits.
 		var dataLen uint8
-		dataLen = lenType >> 5
+		//		dataLen = (lenType >> 5) & 0x07
+		dataLen = (lenType >> 5)
 		// type is the bottom 5 bits.
 		var dataType uint8
 		dataType = lenType & 0x1F
+
+		// FIXME: This is only true if server protocol is 1030+. Probably bail if <1030 or something.
+		if dataLen == 0x07 {
+			dataLen = data[offset]
+			offset++
+		}
 
 		switch dataType {
 		case 0x0:
 			m.Data = append(m.Data, &MessageMap2CoordDataClear{})
 		case 0x1:
+			if dataLen != 1 {
+				return 0, fmt.Errorf("dataLen for darkness is not 1, got %d", dataLen)
+			}
 			var darkness MessageMap2CoordDataDarkness
 			darkness.Darkness = data[offset]
 			m.Data = append(m.Data, &darkness)
 		case 0x2: // label SC 1030
-		// TODO
+			labelType := data[offset]
+			labelLen := data[offset+1]
+			label := string(data[offset+2 : offset+2+int(labelLen)])
+			debug.Debug("label", labelType, label)
 		default:
-			// FIXME: 99% this is wrong.
 			if dataType >= 0x10 && dataType <= 0x19 {
 				var image MessageMap2CoordDataImage
 				image.Layer = dataType - 0x10
+
+				faceOrAnim := uint16(data[offset])<<8 | uint16(data[offset+1])
+				var isAnim bool
+				if (faceOrAnim >> 15) != 0 {
+					isAnim = true
+				}
+
 				if dataLen == 2 {
-					image.FaceNum = uint16(data[offset])<<8 | uint16(data[offset+1])
+					// No smooth
 				} else if dataLen == 3 {
-					image.FaceNum = uint16(data[offset])<<8 | uint16(data[offset+1])
-					// If facenum's high bit is set, it has an animation.
-					if image.FaceNum&0x8000 != 0 {
+					if isAnim {
 						image.AnimSpeed = uint8(data[offset+2])
 						image.HasAnimSpeed = true
 					} else {
@@ -123,13 +164,34 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 						image.HasSmooth = true
 					}
 				} else if dataLen == 4 {
-					image.FaceNum = uint16(data[offset])<<8 | uint16(data[offset+1])
 					image.AnimSpeed = uint8(data[offset+2])
 					image.Smooth = uint8(data[offset+3])
 					image.HasAnimSpeed = true
 					image.HasSmooth = true
+				} else {
+					return 0, fmt.Errorf("dataLen is not 2, 3, or 4, got %d", dataLen)
 				}
-				m.Data = append(m.Data, &image)
+
+				if faceOrAnim == 0 {
+					// Clear layer!
+					m.Data = append(m.Data, MessageMap2CoordDataClearLayer{Layer: image.Layer})
+				} else if isAnim {
+					animFlags := (faceOrAnim >> 6) & 0x03
+					animation := uint16(faceOrAnim) & 0x1fff
+					anim := MessageMap2CoordDataAnim{
+						Layer:  image.Layer,
+						Anim:   animation,
+						Flags:  uint8(animFlags),
+						Speed:  image.AnimSpeed,
+						Smooth: image.Smooth,
+					}
+					m.Data = append(m.Data, &anim)
+				} else {
+					image.FaceNum = faceOrAnim
+					m.Data = append(m.Data, &image)
+				}
+			} else {
+				return 0, fmt.Errorf("Unknown data type %d", dataType)
 			}
 		}
 		offset += int(dataLen)
