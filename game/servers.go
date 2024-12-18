@@ -9,6 +9,7 @@ import (
 
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/messages"
+	"github.com/kettek/termfire/startup"
 	"github.com/rivo/tview"
 )
 
@@ -137,11 +138,26 @@ func (s *Servers) Init(game Game) (tidy func()) {
 	container.AddItem(box2, 3, 1, false)
 
 	go func() {
-		game.Pages().AddAndSwitchToPage("servers", container, true)
-		game.Redraw()
+		if startup.Host != "" {
+			game.SetState(&Login{
+				TargetServer: startup.Host,
+			})
+		} else {
+			game.Pages().AddAndSwitchToPage("servers", container, true)
+			game.Redraw()
+		}
 	}()
 
 	s.Refresh()
+
+	s.hostInput.SetText(startup.History.LastHost)
+
+	for i, server := range s.serverEntries {
+		if server.Hostname == startup.History.LastHost {
+			s.serversContainer.SetCurrentItem(i)
+			break
+		}
+	}
 
 	// TODO: Request Metaserver
 	return func() {

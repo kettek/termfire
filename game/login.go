@@ -1,12 +1,11 @@
 package game
 
 import (
-	"os"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/game/play"
 	"github.com/kettek/termfire/messages"
+	"github.com/kettek/termfire/startup"
 	"github.com/rivo/tview"
 )
 
@@ -17,12 +16,14 @@ type Login struct {
 
 func (l *Login) Init(game Game) (tidy func()) {
 	targetServer := l.TargetServer
-	if targetServer == "" {
-		targetServer = os.Args[1]
-	}
 
-	account := os.Args[2]
-	password := os.Args[3]
+	var account, password string
+	if startup.Account != "" {
+		account = startup.Account
+	}
+	if startup.Password != "" {
+		password = startup.Password
+	}
 
 	// Clear out our face cache.
 	play.GlobalObjectMapper.Reset()
@@ -79,6 +80,10 @@ func (l *Login) Init(game Game) (tidy func()) {
 
 			game.Pages().AddAndSwitchToPage("login", form, true)
 			game.Redraw()
+
+			if account != "" && password != "" {
+				l.TryLogin(game, account, password)
+			}
 		})
 	})
 

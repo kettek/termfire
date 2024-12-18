@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"net"
-	"os"
 	"strconv"
 	"strings"
 
@@ -131,11 +130,6 @@ func bytesToStringAndHex(b []byte) string {
 }
 
 func main() {
-	if len(os.Args) < 4 {
-		println("Usage: termfire <server> <account> <password>")
-		os.Exit(1)
-	}
-
 	if err := debug.Start(); err != nil {
 		panic(err)
 	}
