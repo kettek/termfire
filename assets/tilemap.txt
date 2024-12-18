@@ -23,7 +23,7 @@
 ¶ sign crossroad
 ⌂ fountain statue
 = bridge pier
-▲ church shop tower house ^hall guild inn jail shrine temple farm(?!land)
+▲ church shop(?!_) tower house ^hall guild inn jail shrine temple farm(?!land)
 //# church shop tower house hall guild inn jail shrine temple farm
 † altar
 $ conver
