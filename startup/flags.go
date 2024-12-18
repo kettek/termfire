@@ -15,7 +15,7 @@ var Password string
 var Character string
 
 func init() {
-	flag.StringVar(&Host, "host", "localhost:13327", "The host to connect to")
+	flag.StringVar(&Host, "host", "", "The host to connect to")
 	flag.StringVar(&Account, "account", "", "The account to connect with")
 	flag.StringVar(&Password, "password", "", "The password for the account")
 	flag.StringVar(&Character, "character", "", "The character to connect with")
