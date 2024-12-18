@@ -105,8 +105,9 @@ func (l *Login) TryLogin(game Game, account, password string) {
 			return
 		}
 		m := msg.(*messages.MessageAccountPlayers)
-		// Just join with the first one for now! :) (Play handles actual message account play command due to how we only get a unique message if a failure happens).
-		game.SetState(&Play{character: m.Characters[0].Name})
+		game.SetState(&Characters{
+			Characters: m.Characters,
+		})
 	})
 
 }
