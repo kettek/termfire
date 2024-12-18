@@ -39,6 +39,13 @@ func (m *Messages) Add(msg string, color messages.MessageColor) {
 	m.view.ScrollToEnd()
 }
 
+type KeyBind struct {
+	Key     tcell.Key
+	Rune    rune
+	ModMask tcell.ModMask
+	Command string
+}
+
 type Play struct {
 	MessageHandler
 	game            Game
@@ -54,6 +61,8 @@ type Play struct {
 	sounds          Messages
 	topPacket       uint16
 	lastDir         string // Not sure if we can query this instead...
+	pendingBind     string
+	binds           []KeyBind
 }
 
 func (p *Play) Init(game Game) (tidy func()) {
@@ -121,11 +130,36 @@ func (p *Play) Init(game Game) (tidy func()) {
 	p.input = tview.NewInputField()
 	p.input.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
-			msg := &messages.MessageCommand{Command: p.input.GetText()}
-			msg.Packet = p.topPacket
-			msg.Repeat = 1
-			p.topPacket++
-			game.SendMessage(msg)
+			txt := p.input.GetText()
+			if strings.HasPrefix(txt, "bind") {
+				if txt == "bind" {
+					p.messages.Add("bind requires one or more commands", messages.MessageColorRed)
+				} else {
+					p.pendingBind = txt[5:]
+					p.messages.Add(fmt.Sprintf("Press a key to bind %s to: ", p.pendingBind), messages.MessageColorGrey)
+				}
+			} else if strings.HasPrefix(txt, "unbind") {
+				if txt == "unbind" {
+					for i := 0; i < len(p.binds); i++ {
+						p.messages.Add(fmt.Sprintf("%d: %s", i, p.binds[i].Command), messages.MessageColorGrey)
+					}
+				} else {
+					remaining := txt[7:]
+					index, err := strconv.Atoi(remaining)
+					if err != nil {
+						p.messages.Add("Invalid index", messages.MessageColorRed)
+					} else {
+						p.Unbind(index)
+						p.messages.Add(fmt.Sprintf("Unbound %d", index), messages.MessageColorGrey)
+					}
+				}
+			} else {
+				msg := &messages.MessageCommand{Command: txt}
+				msg.Packet = p.topPacket
+				msg.Repeat = 1
+				p.topPacket++
+				game.SendMessage(msg)
+			}
 			p.input.SetText("")
 		} else if key == tcell.KeyEsc {
 			p.input.SetText("")
@@ -148,6 +182,21 @@ func (p *Play) Init(game Game) (tidy func()) {
 	})
 	p.mapp.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		//debug.Debug("event: ", event.Key(), event.Rune(), event.Modifiers(), event.Name())
+		if p.pendingBind != "" {
+			if event.Key() == tcell.KeyEsc {
+				p.pendingBind = ""
+				p.messages.Add("Bind canceled", messages.MessageColorGrey)
+			} else {
+				p.Bind(event.Key(), event.Rune(), event.Modifiers(), p.pendingBind)
+				p.messages.Add(fmt.Sprintf("Bound %s to %s", p.pendingBind, event.Name()), messages.MessageColorGrey)
+				p.pendingBind = ""
+			}
+			return event
+		}
+
+		if p.CheckBinds(event.Key(), event.Rune(), event.Modifiers()) {
+			return event
+		}
 
 		firing := false
 
@@ -487,4 +536,25 @@ func (p *Play) SendCommand(msg *messages.MessageCommand) {
 	//msg.Repeat = 1
 	p.topPacket++
 	p.game.SendMessage(msg)
+}
+
+func (p *Play) Bind(key tcell.Key, r rune, modMask tcell.ModMask, command string) {
+	p.binds = append(p.binds, KeyBind{Key: key, Rune: r, ModMask: modMask, Command: command})
+}
+
+func (p *Play) Unbind(index int) {
+	if index < 0 || index >= len(p.binds) {
+		return
+	}
+	p.binds = append(p.binds[:index], p.binds[index+1:]...)
+}
+
+func (p *Play) CheckBinds(key tcell.Key, r rune, modMask tcell.ModMask) bool {
+	for _, bind := range p.binds {
+		if bind.Key == key && bind.Rune == r && bind.ModMask == modMask {
+			p.SendCommand(&messages.MessageCommand{Command: bind.Command})
+			return true
+		}
+	}
+	return false
 }
