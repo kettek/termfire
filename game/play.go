@@ -11,6 +11,7 @@ import (
 	"github.com/kettek/termfire/debug"
 	"github.com/kettek/termfire/game/play"
 	"github.com/kettek/termfire/messages"
+	"github.com/kettek/termfire/startup"
 	"github.com/rivo/tview"
 )
 
@@ -510,6 +511,13 @@ func (p *Play) Init(game Game) (tidy func()) {
 		p.status.SetTitle(m.Name)
 		game.Redraw()
 		debug.Debug("player!", msg.Value())
+	})
+
+	p.On(&messages.MessageAccountPlayers{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
+		m := msg.(*messages.MessageAccountPlayers)
+		// Set startup character to blank so we don't relogin.
+		startup.Character = ""
+		game.SetState(&Characters{Characters: m.Characters})
 	})
 
 	p.On(&messages.MessageCommandCompleted{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
