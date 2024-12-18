@@ -143,7 +143,13 @@ func main() {
 
 	g.app.SetAfterDrawFunc(func(s tcell.Screen) {
 		g.app.SetAfterDrawFunc(nil)
-		g.SetState(&game.Login{})
+		g.SetState(&game.Servers{
+			Metaservers: []string{
+				"http://crossfire.real-time.com/metaserver2/meta_client.php",
+				"http://metaserver.eu.cross-fire.org/meta_client.php",
+				"http://metaserver.us.cross-fire.org/meta_client.php",
+			},
+		})
 	})
 
 	if err := g.app.Run(); err != nil {

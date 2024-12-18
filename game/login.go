@@ -12,10 +12,14 @@ import (
 
 type Login struct {
 	MessageHandler
+	TargetServer string
 }
 
 func (l *Login) Init(game Game) (tidy func()) {
-	targetServer := os.Args[1]
+	targetServer := l.TargetServer
+	if targetServer == "" {
+		targetServer = os.Args[1]
+	}
 
 	account := os.Args[2]
 	password := os.Args[3]
@@ -63,9 +67,6 @@ func (l *Login) Init(game Game) (tidy func()) {
 
 		l.Once(&messages.MessageSetup{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 			form := tview.NewForm().
-				AddInputField("Server", targetServer, 0, nil, func(text string) {
-					targetServer = text
-				}).
 				AddInputField("Account", account, 0, nil, func(text string) {
 					account = text
 				}).
