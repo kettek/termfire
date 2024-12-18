@@ -36,6 +36,12 @@ func (c *Characters) Init(game Game) (tidy func()) {
 		characterList.AddItem(primary, secondary, 0, nil)
 	}
 
+	characterButtons.AddButton("Leave", func() {
+		startup.Host = "" // Reset host so we don't reconnect
+		game.Disconnect()
+		game.SetState(&Servers{})
+	})
+
 	characterButtons.AddButton("Play", func() {
 		char := c.Characters[characterList.GetCurrentItem()]
 		game.SetState(&Play{character: char.Name})

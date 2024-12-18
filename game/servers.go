@@ -23,6 +23,12 @@ type Servers struct {
 func (s *Servers) Init(game Game) (tidy func()) {
 	s.game = game
 
+	s.Metaservers = []string{
+		"http://crossfire.real-time.com/metaserver2/meta_client.php",
+		"http://metaserver.eu.cross-fire.org/meta_client.php",
+		"http://metaserver.us.cross-fire.org/meta_client.php",
+	}
+
 	// Setup some UI.
 	container := tview.NewFlex().SetDirection(tview.FlexRow)
 

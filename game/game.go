@@ -105,6 +105,7 @@ type Game interface {
 	App() *tview.Application
 	Redraw()
 	Connect(addr string) error
+	Disconnect()
 	SetState(state State)
 	SendMessage(msg messages.Message) error
 	Log(string)

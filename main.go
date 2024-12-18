@@ -55,6 +55,8 @@ func (g *Game) Connect(targetServer string) error {
 			var buf [32767]byte
 			if n, err := g.conn.Read(buf[:]); err != nil {
 				debug.Debug("Failed to read from server: ", err)
+				// FIXME: Various game states need to know the connection exploded... add some sort on OnDisconnected-type func to each state.
+				return
 			} else {
 				var offset int
 				for offset < n {
@@ -91,6 +93,13 @@ func (g *Game) Connect(targetServer string) error {
 		}
 	}()
 	return nil
+}
+
+func (g *Game) Disconnect() {
+	if g.conn != nil {
+		g.conn.Close()
+		g.conn = nil
+	}
 }
 
 func (g *Game) Log(msg string) {
@@ -145,13 +154,7 @@ func main() {
 
 	g.app.SetAfterDrawFunc(func(s tcell.Screen) {
 		g.app.SetAfterDrawFunc(nil)
-		g.SetState(&game.Servers{
-			Metaservers: []string{
-				"http://crossfire.real-time.com/metaserver2/meta_client.php",
-				"http://metaserver.eu.cross-fire.org/meta_client.php",
-				"http://metaserver.us.cross-fire.org/meta_client.php",
-			},
-		})
+		g.SetState(&game.Servers{})
 	})
 
 	if err := g.app.Run(); err != nil {
