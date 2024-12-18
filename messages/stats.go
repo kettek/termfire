@@ -867,7 +867,7 @@ func (m *MessageStatSkill) UnmarshalBinary(data []byte) (int, error) {
 }
 
 func (m MessageStatSkill) Matches(id byte) bool {
-	return id > 140
+	return id >= 140
 }
 
 func init() {
