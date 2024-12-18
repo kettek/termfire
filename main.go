@@ -61,11 +61,19 @@ func (g *Game) Connect(targetServer string) error {
 				for offset < n {
 					length := int(buf[offset])<<8 | int(buf[offset+1])
 
+					// TODO: Turn into a loop?
 					if offset+length > n {
 						// FIXME: Something is really wrong here -- we get message too long too often... are we failing to read some messages somehow...?
 						debug.Debug("message too long: ", offset, length, n, string(buf[offset:n]))
-						break
-						//return
+
+						if n2, err := g.conn.Read(buf[n:]); err != nil {
+							debug.Debug("Failed to read from server: ", err)
+							return
+						} else {
+							debug.Debug("Read more data: ", n2)
+							n += n2
+						}
+						continue
 					}
 
 					offset += 2
