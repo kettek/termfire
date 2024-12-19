@@ -46,9 +46,6 @@ func (c *Characters) Init(game Game) (tidy func()) {
 		char := c.Characters[characterList.GetCurrentItem()]
 		game.SetState(&Play{character: char.Name})
 	})
-	characterButtons.AddButton("Delete", func() {
-		// TODO: Show confirm
-	})
 
 	containerCharacters.AddItem(characterList, 0, 1, true)
 	containerCharacters.AddItem(characterButtons, 3, 1, false)
