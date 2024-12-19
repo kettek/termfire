@@ -45,7 +45,7 @@ func (s *Servers) Init(game Game) (tidy func()) {
 	})
 	box.AddItem(s.serversContainer, 0, 1, true)
 
-	container.AddItem(box, 0, 1, false)
+	container.AddItem(box, 0, 1, true)
 	// Manual Join
 	box2 := tview.NewFlex()
 	box2.SetDirection(tview.FlexRow)
