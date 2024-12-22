@@ -7,8 +7,8 @@
 ~ water sea shallow_sea river branch
 ¢ coin
 º pearl ruby sapphire diamond emerald
-+ door
-- door([^.]*).11[34]
++ door wooddoor
+- door([^.]*).11[34] wooddoor([^.]*).11[34]
 ‡ gate grate
 - gate([^.]*).11[1234] grate([^.]*).11[1234]
 ┕ chair
