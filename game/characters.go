@@ -50,7 +50,7 @@ func (c *Characters) Init(game Game) (tidy func()) {
 	containerCharacters.AddItem(characterList, 0, 1, true)
 	containerCharacters.AddItem(characterButtons, 3, 1, false)
 
-	container.AddItem(containerCharacters, 0, 1, false)
+	container.AddItem(containerCharacters, 0, 1, true)
 
 	go func() {
 		if startup.Character != "" {
