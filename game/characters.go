@@ -35,6 +35,9 @@ func (c *Characters) Init(game Game) (tidy func()) {
 		secondary := fmt.Sprintf("  %s %s", character.Map, character.Party)
 		characterList.AddItem(primary, secondary, 0, nil)
 	}
+	characterList.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
+		game.SetState(&Play{character: c.Characters[index].Name})
+	})
 
 	characterButtons.AddButton("Leave", func() {
 		startup.Host = "" // Reset host so we don't reconnect
