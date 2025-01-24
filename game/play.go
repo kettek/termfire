@@ -48,7 +48,7 @@ type KeyBind struct {
 }
 
 type Play struct {
-	MessageHandler
+	messages.MessageHandler
 	game            Game
 	character       string
 	playerTag       int32
@@ -182,7 +182,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 		})
 	})
 	p.mapp.View.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		//debug.Debug("event: ", event.Key(), event.Rune(), event.Modifiers(), event.Name())
+		// debug.Debug("event: ", event.Key(), event.Rune(), event.Modifiers(), event.Name())
 		if p.pendingBind != "" {
 			if event.Key() == tcell.KeyEsc {
 				p.pendingBind = ""
@@ -442,7 +442,7 @@ func (p *Play) Init(game Game) (tidy func()) {
 			if len(m.Data) == 0 {
 				// I think this is a "you are here" type message???
 				if m.X == p.mapp.CenterX() && m.Y == p.mapp.CenterY() {
-					//p.mapp.SetCell(m.X, m.Y, play.MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack)
+					// p.mapp.SetCell(m.X, m.Y, play.MapRunePlayer, tcell.ColorWhite, tcell.ColorBlack)
 				}
 				continue
 			}
@@ -461,9 +461,9 @@ func (p *Play) Init(game Game) (tidy func()) {
 						}{m.X, m.Y, play.GlobalObjectMapper.FaceToRune[faces[0]], int(d.Layer)})
 					}
 				case *messages.MessageMap2CoordDataDarkness:
-					//debug.Debug("darkness: ", d)
+					// debug.Debug("darkness: ", d)
 				case *messages.MessageMap2CoordDataImage:
-					//debug.Debug("image: ", d)
+					// debug.Debug("image: ", d)
 					t, ok := play.GlobalObjectMapper.FaceToRune[d.FaceNum]
 					if !ok {
 						t = play.MapTile{'?', tcell.ColorWhite, tcell.ColorBlack}
@@ -539,9 +539,9 @@ func (p *Play) OnMessage(m messages.Message) {
 }
 
 func (p *Play) SendCommand(msg *messages.MessageCommand) {
-	//debug.Debug("command: ", msg.Command)
+	// debug.Debug("command: ", msg.Command)
 	msg.Packet = p.topPacket
-	//msg.Repeat = 1
+	// msg.Repeat = 1
 	p.topPacket++
 	p.game.SendMessage(msg)
 }

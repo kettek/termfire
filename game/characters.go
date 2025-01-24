@@ -9,12 +9,11 @@ import (
 )
 
 type Characters struct {
-	MessageHandler
+	messages.MessageHandler
 	Characters []messages.Character
 }
 
 func (c *Characters) Init(game Game) (tidy func()) {
-
 	container := tview.NewFlex()
 	container.SetDirection(tview.FlexColumn)
 

@@ -10,7 +10,7 @@ import (
 )
 
 type Login struct {
-	MessageHandler
+	messages.MessageHandler
 	TargetServer string
 }
 
@@ -109,5 +109,4 @@ func (l *Login) TryLogin(game Game, account, password string) {
 			Characters: m.Characters,
 		})
 	})
-
 }
