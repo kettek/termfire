@@ -8,7 +8,7 @@ import (
 	"github.com/kettek/termfire/debug"
 )
 
-// TODO: image_sums, exp_table, knowledge_info, skill_info, skill_extra, spell_paths, race_list, race_info, class_list, class_info, startingmap, newcharinfo, news, rules, motd
+// TODO: image_sums, exp_table, knowledge_info, skill_info, skill_extra, spell_paths, race_list, race_info, class_list, class_info, startingmap, newcharinfo
 type MessageRequestInfoData interface {
 	Kind() string
 	Bytes() []byte
@@ -21,6 +21,36 @@ func (m MessageRequestInfoDataImageInfo) Kind() string {
 }
 
 func (m MessageRequestInfoDataImageInfo) Bytes() []byte {
+	return nil
+}
+
+type MessageRequestInfoNews struct{}
+
+func (m MessageRequestInfoNews) Kind() string {
+	return "news"
+}
+
+func (m MessageRequestInfoNews) Bytes() []byte {
+	return nil
+}
+
+type MessageRequestInfoRules struct{}
+
+func (m MessageRequestInfoRules) Kind() string {
+	return "rules"
+}
+
+func (m MessageRequestInfoRules) Bytes() []byte {
+	return nil
+}
+
+type MessageRequestInfoMotd struct{}
+
+func (m MessageRequestInfoMotd) Kind() string {
+	return "motd"
+}
+
+func (m MessageRequestInfoMotd) Bytes() []byte {
 	return nil
 }
 
@@ -70,6 +100,12 @@ type MessageReplyInfoDataImageInfo struct {
 	Checksum        int
 	Sets            []MessageReplyInfoDataImageInfoSet
 }
+
+type MessageReplyInfoDataNews string
+
+type MessageReplyInfoDataRules string
+
+type MessageReplyInfoDataMotd string
 
 type MessageReplyInfo struct {
 	Data MessageReplyInfoData
@@ -127,7 +163,12 @@ func (m *MessageReplyInfo) UnmarshalBinary(data []byte) error {
 			})
 		}
 		m.Data = data
-		// TODO: image_sums, exp_table, knowledge_info, skill_info, skill_extra, spell_paths, race_list, race_info, class_list, class_info, startingmap, newcharinfo, news, rules, motd
+	case "news":
+		m.Data = MessageReplyInfoDataNews(strings.Join(parts[1:], "\n"))
+	case "rules":
+		m.Data = MessageReplyInfoDataRules(strings.Join(parts[1:], "\n"))
+	case "motd":
+		m.Data = MessageReplyInfoDataMotd(strings.Join(parts[1:], "\n"))
 	}
 	return nil
 }
