@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/kettek/termfire/debug"
 )
 
 // TODO: image_sums, exp_table, knowledge_info, skill_info, skill_extra, spell_paths, race_list, race_info, class_list, class_info, startingmap, newcharinfo
@@ -54,6 +52,26 @@ func (m MessageRequestInfoMotd) Bytes() []byte {
 	return nil
 }
 
+type MessageRequestInfoRaceList struct{}
+
+func (m MessageRequestInfoRaceList) Kind() string {
+	return "race_list"
+}
+
+func (m MessageRequestInfoRaceList) Bytes() []byte {
+	return nil
+}
+
+type MessageRequestInfoRaceInfo string
+
+func (m MessageRequestInfoRaceInfo) Kind() string {
+	return "race_info"
+}
+
+func (m MessageRequestInfoRaceInfo) Bytes() []byte {
+	return []byte(m)
+}
+
 type MessageRequestInfo struct {
 	Data MessageRequestInfoData
 }
@@ -76,7 +94,11 @@ func (m MessageRequestInfo) Bytes() []byte {
 	result = append(result, ' ')
 	if m.Data != nil {
 		result = append(result, []byte(m.Data.Kind())...)
-		result = append(result, m.Data.Bytes()...)
+		bytes := m.Data.Bytes()
+		if len(bytes) > 0 {
+			result = append(result, ' ')
+			result = append(result, bytes...)
+		}
 	}
 	return result
 }
@@ -107,6 +129,22 @@ type MessageReplyInfoDataRules string
 
 type MessageReplyInfoDataMotd string
 
+type MessageReplyInfoDataRaceList []string
+
+type MessageReplyInfoDataRaceInfo struct {
+	Arch        string
+	Name        string
+	Description string
+	Stats       []MessageStat
+	Choices     []Choice
+}
+
+type Choice struct {
+	Name        string
+	Description string
+	Options     [][2]string // Name and Description pair
+}
+
 type MessageReplyInfo struct {
 	Data MessageReplyInfoData
 }
@@ -116,29 +154,34 @@ func (m MessageReplyInfo) Kind() string {
 }
 
 func (m *MessageReplyInfo) UnmarshalBinary(data []byte) error {
-	parts := strings.Split(string(data), "\n")
-	if len(parts) == 0 {
-		return nil
+	// Read info type.
+	var infoType string
+	for i, b := range data {
+		if b == ' ' || b == '\n' {
+			infoType = string(data[:i])
+			data = data[i+1:]
+			break
+		}
 	}
-	switch parts[0] {
+	switch infoType {
 	case "image_info":
+		parts := strings.Split(string(data), "\n")
 		if len(parts) < 3 {
 			return fmt.Errorf("Not enough parts for image_info")
 		}
-		lastImageNumber, _ := strconv.Atoi(parts[1])
-		checksum, _ := strconv.Atoi(parts[2])
+		lastImageNumber, _ := strconv.Atoi(parts[0])
+		checksum, _ := strconv.Atoi(parts[1])
 
 		data := MessageReplyInfoDataImageInfo{
 			LastImageNumber: lastImageNumber,
 			Checksum:        checksum,
 		}
 		// Get our image sets.
-		for i := 3; i < len(parts); i++ {
+		for i := 2; i < len(parts); i++ {
 			if parts[i] == "" {
 				continue
 			}
 			imageParts := strings.Split(parts[i], ":")
-			debug.Debug(imageParts, len(imageParts))
 			if len(imageParts) != 7 {
 				return fmt.Errorf("Not enough parts for image_info image")
 			}
@@ -164,11 +207,89 @@ func (m *MessageReplyInfo) UnmarshalBinary(data []byte) error {
 		}
 		m.Data = data
 	case "news":
-		m.Data = MessageReplyInfoDataNews(strings.Join(parts[1:], "\n"))
+		m.Data = MessageReplyInfoDataNews(data)
 	case "rules":
-		m.Data = MessageReplyInfoDataRules(strings.Join(parts[1:], "\n"))
+		m.Data = MessageReplyInfoDataRules(data)
 	case "motd":
-		m.Data = MessageReplyInfoDataMotd(strings.Join(parts[1:], "\n"))
+		m.Data = MessageReplyInfoDataMotd(data)
+	case "race_list":
+		// NOTE: delimiter is "|", not ":", unlike what the CF protocol file says!
+		races := strings.Split(string(data), "|")
+		// Skip the first, because for whatever reason we start with "|"
+		races = races[1:]
+		m.Data = MessageReplyInfoDataRaceList(races)
+	case "race_info":
+		msg := MessageReplyInfoDataRaceInfo{}
+		// Race is until newline.
+		for i, b := range data {
+			if b == '\n' {
+				msg.Arch = string(data[:i])
+				data = data[i+1:]
+				break
+			}
+		}
+		done := false
+		for !done {
+			var kind string
+			for i, b := range data {
+				if b == ' ' {
+					kind = string(data[:i])
+					data = data[i+1:]
+					break
+				}
+			}
+			offset := 0
+			switch kind {
+			case "name":
+				msg.Name, offset = readLengthPrefixedString(data, offset)
+				data = data[offset:]
+			case "msg":
+				msg.Description, offset = readLengthPrefixedString2(data, offset)
+				data = data[offset:]
+			case "stats":
+				for i := 0; i < len(data); i++ {
+					kind := data[i]
+					if kind == 0 { // 0 signifies done.
+						data = data[i+1:]
+						break
+					}
+					// Re-use stat message processing, I suppose.
+					for _, s := range gMessageStats {
+						if s.Matches(kind) {
+							count, err := s.UnmarshalBinary(data)
+							if err != nil {
+								return err
+							}
+							i += count
+							msg.Stats = append(msg.Stats, s)
+							break
+						}
+					}
+				}
+			case "choice":
+				choice := Choice{}
+				// Documentation for this in protocols.txt is a rather bad to parse out (I know a certain someone would disagree), but it seems to be this.
+				choice.Name, offset = readLengthPrefixedString(data, offset)
+				choice.Description, offset = readLengthPrefixedString(data, offset)
+				// Loop reading each "arch", then check next byte for 0.
+				for i := 0; i < len(data); i++ {
+					option := [2]string{}
+					option[0], offset = readLengthPrefixedString(data, offset)
+					option[1], offset = readLengthPrefixedString(data, offset)
+					choice.Options = append(choice.Options, option)
+					if data[offset] == 0 {
+						offset++
+						break
+					}
+				}
+				data = data[offset:]
+				msg.Choices = append(msg.Choices, choice)
+			default:
+				done = true
+				break
+			}
+			m.Data = msg
+		}
 	}
 	return nil
 }
