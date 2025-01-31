@@ -104,6 +104,10 @@ type MessageSetup struct {
 		Use   bool
 		Value bool
 	}
+	FaceSet struct {
+		Use   bool
+		Value uint8
+	}
 	LoginMethod struct {
 		Use   bool
 		Value string
@@ -129,6 +133,10 @@ func (m *MessageSetup) UnmarshalBinary(data []byte) error {
 		case "facecache":
 			m.FaceCache.Use = true
 			m.FaceCache.Value, _ = strconv.ParseBool(parts[i+1])
+		case "faceset":
+			m.FaceSet.Use = true
+			v, _ := strconv.ParseUint(parts[i+1], 10, 8)
+			m.FaceSet.Value = uint8(v)
 		case "loginmethod":
 			m.LoginMethod.Use = true
 			m.LoginMethod.Value = parts[i+1]
@@ -169,6 +177,12 @@ func (m MessageSetup) Bytes() []byte {
 		result = append(result, []byte("facecache")...)
 		result = append(result, ' ')
 		result = append(result, '1')
+	}
+	if m.FaceSet.Use {
+		result = append(result, ' ')
+		result = append(result, []byte("faceset")...)
+		result = append(result, ' ')
+		result = append(result, []byte(strconv.Itoa(int(m.FaceSet.Value)))...)
 	}
 	if m.LoginMethod.Use {
 		result = append(result, ' ')
