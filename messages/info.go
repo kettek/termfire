@@ -72,6 +72,26 @@ func (m MessageRequestInfoRaceInfo) Bytes() []byte {
 	return []byte(m)
 }
 
+type MessageRequestInfoClassList struct{}
+
+func (m MessageRequestInfoClassList) Kind() string {
+	return "class_list"
+}
+
+func (m MessageRequestInfoClassList) Bytes() []byte {
+	return nil
+}
+
+type MessageRequestInfoClassInfo string
+
+func (m MessageRequestInfoClassInfo) Kind() string {
+	return "class_info"
+}
+
+func (m MessageRequestInfoClassInfo) Bytes() []byte {
+	return []byte(m)
+}
+
 type MessageRequestInfo struct {
 	Data MessageRequestInfoData
 }
@@ -131,12 +151,99 @@ type MessageReplyInfoDataMotd string
 
 type MessageReplyInfoDataRaceList []string
 
-type MessageReplyInfoDataRaceInfo struct {
+type MessageReplyInfoDataClassList []string
+
+type MessageReplyInfoDataRaceOrClassInfo struct {
 	Arch        string
 	Name        string
 	Description string
 	Stats       []MessageStat
 	Choices     []Choice
+}
+
+type MessageReplyInfoDataRaceInfo MessageReplyInfoDataRaceOrClassInfo
+type MessageReplyInfoDataClassInfo MessageReplyInfoDataRaceOrClassInfo
+
+func (msg *MessageReplyInfoDataRaceOrClassInfo) UnmarshalBinary(data []byte) (int, error) {
+	adjust := 0
+	// Race is until newline.
+	for i, b := range data {
+		if b == '\n' {
+			msg.Arch = string(data[:i])
+			data = data[i+1:]
+			adjust += i + 1
+			break
+		}
+	}
+	done := false
+	for !done {
+		var kind string
+		for i, b := range data {
+			if b == ' ' {
+				kind = string(data[:i])
+				data = data[i+1:]
+				adjust += i + 1
+				break
+			}
+		}
+		offset := 0
+		switch kind {
+		case "name":
+			msg.Name, offset = readLengthPrefixedString(data, offset)
+			data = data[offset:]
+			adjust += offset
+		case "msg":
+			msg.Description, offset = readLengthPrefixedString2(data, offset)
+			data = data[offset:]
+			adjust += offset
+		case "stats":
+			for i := 0; i < len(data); i++ {
+				kind := data[i]
+				if kind == 0 { // 0 signifies done.
+					data = data[i+1:]
+					adjust += i + 1
+					break
+				}
+				// Re-use stat message processing, I suppose.
+				for _, s := range gMessageStats {
+					if s.Matches(kind) {
+						count, err := s.UnmarshalBinary(data)
+						if err != nil {
+							return adjust, err
+						}
+						i += count
+						adjust += count
+						msg.Stats = append(msg.Stats, s)
+						break
+					}
+				}
+			}
+		case "choice":
+			choice := Choice{}
+			// Documentation for this in protocols.txt is a rather bad to parse out (I know a certain someone would disagree), but it seems to be this.
+			choice.Name, offset = readLengthPrefixedString(data, offset)
+			choice.Description, offset = readLengthPrefixedString(data, offset)
+			// Loop reading each "arch", then check next byte for 0.
+			for i := 0; i < len(data); i++ {
+				option := [2]string{}
+				option[0], offset = readLengthPrefixedString(data, offset)
+				option[1], offset = readLengthPrefixedString(data, offset)
+				choice.Options = append(choice.Options, option)
+				if data[offset] == 0 {
+					offset++
+					adjust += offset
+					break
+				}
+			}
+			data = data[offset:]
+			adjust += offset
+			msg.Choices = append(msg.Choices, choice)
+		default:
+			done = true
+			break
+		}
+	}
+	return adjust, nil
 }
 
 type Choice struct {
@@ -219,77 +326,23 @@ func (m *MessageReplyInfo) UnmarshalBinary(data []byte) error {
 		races = races[1:]
 		m.Data = MessageReplyInfoDataRaceList(races)
 	case "race_info":
-		msg := MessageReplyInfoDataRaceInfo{}
-		// Race is until newline.
-		for i, b := range data {
-			if b == '\n' {
-				msg.Arch = string(data[:i])
-				data = data[i+1:]
-				break
-			}
+		msg := MessageReplyInfoDataRaceOrClassInfo{}
+		_, err := msg.UnmarshalBinary(data)
+		if err != nil {
+			return err
 		}
-		done := false
-		for !done {
-			var kind string
-			for i, b := range data {
-				if b == ' ' {
-					kind = string(data[:i])
-					data = data[i+1:]
-					break
-				}
-			}
-			offset := 0
-			switch kind {
-			case "name":
-				msg.Name, offset = readLengthPrefixedString(data, offset)
-				data = data[offset:]
-			case "msg":
-				msg.Description, offset = readLengthPrefixedString2(data, offset)
-				data = data[offset:]
-			case "stats":
-				for i := 0; i < len(data); i++ {
-					kind := data[i]
-					if kind == 0 { // 0 signifies done.
-						data = data[i+1:]
-						break
-					}
-					// Re-use stat message processing, I suppose.
-					for _, s := range gMessageStats {
-						if s.Matches(kind) {
-							count, err := s.UnmarshalBinary(data)
-							if err != nil {
-								return err
-							}
-							i += count
-							msg.Stats = append(msg.Stats, s)
-							break
-						}
-					}
-				}
-			case "choice":
-				choice := Choice{}
-				// Documentation for this in protocols.txt is a rather bad to parse out (I know a certain someone would disagree), but it seems to be this.
-				choice.Name, offset = readLengthPrefixedString(data, offset)
-				choice.Description, offset = readLengthPrefixedString(data, offset)
-				// Loop reading each "arch", then check next byte for 0.
-				for i := 0; i < len(data); i++ {
-					option := [2]string{}
-					option[0], offset = readLengthPrefixedString(data, offset)
-					option[1], offset = readLengthPrefixedString(data, offset)
-					choice.Options = append(choice.Options, option)
-					if data[offset] == 0 {
-						offset++
-						break
-					}
-				}
-				data = data[offset:]
-				msg.Choices = append(msg.Choices, choice)
-			default:
-				done = true
-				break
-			}
-			m.Data = msg
+		m.Data = MessageReplyInfoDataRaceInfo(msg)
+	case "class_list":
+		classes := strings.Split(string(data), "|")
+		classes = classes[1:]
+		m.Data = MessageReplyInfoDataClassList(classes)
+	case "class_info":
+		msg := MessageReplyInfoDataRaceOrClassInfo{}
+		_, err := msg.UnmarshalBinary(data)
+		if err != nil {
+			return err
 		}
+		m.Data = MessageReplyInfoDataClassInfo(msg)
 	}
 	return nil
 }
