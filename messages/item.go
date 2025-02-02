@@ -8,16 +8,16 @@ import (
 
 type ItemObject struct {
 	Tag         int32
-	Flags       uint32
-	Weight      uint32
-	TotalWeight uint32
-	Face        uint32
+	Flags       int32
+	Weight      int32
+	TotalWeight int32
+	Face        int32
 	Name        string
 	PluralName  string
-	Anim        uint16
-	AnimSpeed   uint8
-	Nrof        uint32
-	Type        uint16
+	Anim        int16
+	AnimSpeed   int8
+	Nrof        int32
+	Type        int16
 }
 
 func (o ItemObject) GetName() string {
@@ -41,11 +41,11 @@ func (m *MessageItem2) UnmarshalBinary(data []byte) error {
 		var obj ItemObject
 		obj.Tag = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		offset += 4
-		obj.Flags = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+		obj.Flags = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		offset += 4
-		obj.Weight = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+		obj.Weight = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		offset += 4
-		obj.Face = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+		obj.Face = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		offset += 4
 		obj.Name, offset = readLengthPrefixedString(data, offset)
 		{ // SC 1024 support
@@ -55,16 +55,16 @@ func (m *MessageItem2) UnmarshalBinary(data []byte) error {
 				obj.PluralName = parts[1]
 			}
 		}
-		obj.Anim = uint16(data[offset])<<8 | uint16(data[offset+1])
+		obj.Anim = int16(data[offset])<<8 | int16(data[offset+1])
 		offset += 2
-		obj.AnimSpeed = uint8(data[offset])
+		obj.AnimSpeed = int8(data[offset])
 		offset++
-		obj.Nrof = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+		obj.Nrof = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		{
 			obj.TotalWeight = obj.Weight * obj.Nrof
 		}
 		offset += 4
-		obj.Type = uint16(data[offset])<<8 | uint16(data[offset+1])
+		obj.Type = int16(data[offset])<<8 | int16(data[offset+1])
 		offset += 2
 		m.Objects = append(m.Objects, obj)
 	}
@@ -90,7 +90,7 @@ func (m MessageItem2) Bytes() []byte {
 
 type MessageUpdateItem struct {
 	Tag    int32
-	Flags  uint8
+	Flags  int8
 	Values []any // TODO
 }
 

@@ -5,9 +5,9 @@ import "fmt"
 type MessageSound struct {
 	X         int8
 	Y         int8
-	Direction uint8 // 0-8
-	Volume    uint8 // 0-100
-	Type      uint8 //???
+	Direction int8 // 0-8
+	Volume    int8 // 0-100
+	Type      int8 //???
 	Action    string
 	Name      string
 }
@@ -15,9 +15,9 @@ type MessageSound struct {
 func (m *MessageSound) UnmarshalBinary(data []byte) error {
 	m.X = int8(data[0])
 	m.Y = int8(data[1])
-	m.Direction = data[2]
-	m.Volume = data[3]
-	m.Type = data[4]
+	m.Direction = int8(data[2])
+	m.Volume = int8(data[3])
+	m.Type = int8(data[4])
 	offset := 5
 	m.Action, offset = readLengthPrefixedString(data, offset)
 	m.Name, _ = readLengthPrefixedString(data, offset)

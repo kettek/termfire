@@ -334,22 +334,22 @@ func (p *Play) Init(game Game) (tidy func()) {
 
 	p.On(&messages.MessageImage2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageImage2)
-		play.GlobalObjectMapper.FaceToSize[uint16(m.Face)] = play.RuneSize{Width: uint8(m.Width / 32), Height: uint8(m.Height / 32)}
+		play.GlobalObjectMapper.FaceToSize[int16(m.Face)] = play.RuneSize{Width: uint8(m.Width / 32), Height: uint8(m.Height / 32)}
 	})
 
 	p.On(&messages.MessageFace2{}, nil, func(msg messages.Message, failure *messages.MessageFailure) {
 		m := msg.(*messages.MessageFace2)
 
 		if regexp.MustCompile(`(.*?)\.x\d\d`).MatchString(m.Name) {
-			game.SendMessage(&messages.MessageAskFace{Face: uint32(m.Num)})
+			game.SendMessage(&messages.MessageAskFace{Face: int32(m.Num)})
 		}
 
 		r, fg, bg := play.GlobalObjectMapper.GetRuneAndColors(m.Name)
 		if r == 0 {
 			r = rune(m.Name[0])
 		}
-		play.GlobalObjectMapper.FaceToName[uint16(m.Num)] = m.Name
-		play.GlobalObjectMapper.FaceToRune[uint16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
+		play.GlobalObjectMapper.FaceToName[int16(m.Num)] = m.Name
+		play.GlobalObjectMapper.FaceToRune[int16(m.Num)] = play.MapTile{R: play.MapRune(r), F: tcell.GetColor(fg), B: tcell.GetColor(bg)}
 		p.objectDebugView.Refresh()
 	})
 

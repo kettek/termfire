@@ -5,8 +5,8 @@ import (
 )
 
 type MessageImage2 struct {
-	Face uint32
-	Set  uint8
+	Face int32
+	Set  int8
 	// We extract the width and height manually for the TUI client, so it doesn't have to actually manage PNGs.
 	Width  int
 	Height int
@@ -15,11 +15,11 @@ type MessageImage2 struct {
 
 func (m *MessageImage2) UnmarshalBinary(data []byte) error {
 	offset := 0
-	m.Face = uint32(data[0])<<24 | uint32(data[1])<<16 | uint32(data[2])<<8 | uint32(data[3])
+	m.Face = int32(data[0])<<24 | int32(data[1])<<16 | int32(data[2])<<8 | int32(data[3])
 	offset += 4
-	m.Set = uint8(data[4])
+	m.Set = int8(data[4])
 	offset++
-	dataLen := uint32(data[5])<<24 | uint32(data[6])<<16 | uint32(data[7])<<8 | uint32(data[8])
+	dataLen := int32(data[5])<<24 | int32(data[6])<<16 | int32(data[7])<<8 | int32(data[8])
 	offset += 4
 	// Copy data. NOTE: We could make this optional, in the event the client doesn't actually want the data...
 	m.Data = make([]byte, dataLen)
@@ -51,7 +51,7 @@ func (m MessageImage2) Bytes() []byte {
 }
 
 type MessageAskFace struct {
-	Face uint32
+	Face int32
 }
 
 func (m *MessageAskFace) UnmarshalBinary(data []byte) error {

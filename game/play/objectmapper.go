@@ -8,19 +8,19 @@ import (
 var GlobalObjectMapper ObjectMapper
 
 type ObjectMapper struct {
-	FaceToName  map[uint16]string
-	FaceToRune  map[uint16]MapTile
-	FaceToSize  map[uint16]RuneSize
-	AnimToFaces map[uint16][]uint16
+	FaceToName  map[int16]string
+	FaceToRune  map[int16]MapTile
+	FaceToSize  map[int16]RuneSize
+	AnimToFaces map[int16][]int16
 	Runes       []RuneDefinition
 	Objects     []ObjectMap
 }
 
 func (m *ObjectMapper) Reset() {
-	m.FaceToName = make(map[uint16]string)
-	m.FaceToRune = make(map[uint16]MapTile)
-	m.FaceToSize = make(map[uint16]RuneSize)
-	m.AnimToFaces = make(map[uint16][]uint16)
+	m.FaceToName = make(map[int16]string)
+	m.FaceToRune = make(map[int16]MapTile)
+	m.FaceToSize = make(map[int16]RuneSize)
+	m.AnimToFaces = make(map[int16][]int16)
 }
 
 func (m *ObjectMapper) UnmarshalBinary(data []byte) error {

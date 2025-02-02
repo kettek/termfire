@@ -7,7 +7,7 @@ import (
 	"github.com/kettek/termfire/debug"
 )
 
-type MessageMap2CoordType uint16
+type MessageMap2CoordType int16
 
 const (
 	MessageMap2CoordTypeNormal MessageMap2CoordType = iota
@@ -21,28 +21,28 @@ type MessageMap2CoordDataClear struct {
 }
 
 type MessageMap2CoordDataClearLayer struct {
-	Layer uint8
+	Layer int8
 }
 
 type MessageMap2CoordDataDarkness struct {
-	Darkness uint8
+	Darkness int8
 }
 
 type MessageMap2CoordDataImage struct {
-	Layer        uint8
-	FaceNum      uint16
+	Layer        int8
+	FaceNum      int16
 	HasAnimSpeed bool
-	AnimSpeed    uint8
+	AnimSpeed    int8
 	HasSmooth    bool
-	Smooth       uint8
+	Smooth       int8
 }
 
 type MessageMap2CoordDataAnim struct {
-	Layer  uint8
-	Anim   uint16
-	Flags  uint8
-	Speed  uint8
-	Smooth uint8
+	Layer  int8
+	Anim   int16
+	Flags  int8
+	Speed  int8
+	Smooth int8
 }
 
 func (m MessageMap2CoordDataAnim) String() string {
@@ -135,7 +135,7 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 				return 0, fmt.Errorf("dataLen for darkness is not 1, got %d", dataLen)
 			}
 			var darkness MessageMap2CoordDataDarkness
-			darkness.Darkness = data[offset]
+			darkness.Darkness = int8(data[offset])
 			m.Data = append(m.Data, &darkness)
 		case 0x2: // label SC 1030
 			labelType := data[offset]
@@ -145,9 +145,9 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 		default:
 			if dataType >= 0x10 && dataType <= 0x19 {
 				var image MessageMap2CoordDataImage
-				image.Layer = dataType - 0x10
+				image.Layer = int8(dataType - 0x10)
 
-				faceOrAnim := uint16(data[offset])<<8 | uint16(data[offset+1])
+				faceOrAnim := int16(data[offset])<<8 | int16(data[offset+1])
 				var isAnim bool
 				if (faceOrAnim >> 15) != 0 {
 					isAnim = true
@@ -157,15 +157,15 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 					// No smooth
 				} else if dataLen == 3 {
 					if isAnim {
-						image.AnimSpeed = uint8(data[offset+2])
+						image.AnimSpeed = int8(data[offset+2])
 						image.HasAnimSpeed = true
 					} else {
-						image.Smooth = uint8(data[offset+2])
+						image.Smooth = int8(data[offset+2])
 						image.HasSmooth = true
 					}
 				} else if dataLen == 4 {
-					image.AnimSpeed = uint8(data[offset+2])
-					image.Smooth = uint8(data[offset+3])
+					image.AnimSpeed = int8(data[offset+2])
+					image.Smooth = int8(data[offset+3])
 					image.HasAnimSpeed = true
 					image.HasSmooth = true
 				} else {
@@ -177,11 +177,11 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 					m.Data = append(m.Data, MessageMap2CoordDataClearLayer{Layer: image.Layer})
 				} else if isAnim {
 					animFlags := (faceOrAnim >> 6) & 0x03
-					animation := uint16(faceOrAnim) & 0x1fff
+					animation := int16(faceOrAnim) & 0x1fff
 					anim := MessageMap2CoordDataAnim{
 						Layer:  image.Layer,
 						Anim:   animation,
-						Flags:  uint8(animFlags),
+						Flags:  int8(animFlags),
 						Speed:  image.AnimSpeed,
 						Smooth: image.Smooth,
 					}
@@ -254,13 +254,13 @@ func (m MessageNewMap) Bytes() []byte {
 }
 
 type MessageSmooth struct {
-	Face      uint16
-	SmoothPic uint16
+	Face      int16
+	SmoothPic int16
 }
 
 func (m *MessageSmooth) UnmarshalBinary(data []byte) error {
-	m.Face = uint16(data[0])<<8 | uint16(data[1])
-	m.SmoothPic = uint16(data[2])<<8 | uint16(data[3])
+	m.Face = int16(data[0])<<8 | int16(data[1])
+	m.SmoothPic = int16(data[2])<<8 | int16(data[3])
 	return nil
 }
 
@@ -278,8 +278,8 @@ func (m MessageSmooth) Bytes() []byte {
 
 type MessagePlayer struct {
 	Tag    int32
-	Weight uint32
-	Face   uint32
+	Weight int32
+	Face   int32
 	Name   string
 }
 
@@ -287,9 +287,9 @@ func (m *MessagePlayer) UnmarshalBinary(data []byte) error {
 	offset := 0
 	m.Tag = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 	offset += 4
-	m.Weight = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+	m.Weight = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 	offset += 4
-	m.Face = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+	m.Face = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 	offset += 4
 	m.Name, _ = readLengthPrefixedString(data, offset)
 	return nil
