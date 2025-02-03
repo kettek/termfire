@@ -448,11 +448,11 @@ func (p *Play) Init(game Game) (tidy func()) {
 			}
 			for _, c := range m.Data {
 				switch d := c.(type) {
-				case *messages.MessageMap2CoordDataClear:
+				case messages.MessageMap2CoordDataClear:
 					p.mapp.ClearCell(m.X, m.Y)
-				case *messages.MessageMap2CoordDataClearLayer:
+				case messages.MessageMap2CoordDataClearLayer:
 					p.mapp.RemoveCellLayer(m.X, m.Y, int(d.Layer))
-				case *messages.MessageMap2CoordDataAnim:
+				case messages.MessageMap2CoordDataAnim:
 					if faces, ok := play.GlobalObjectMapper.AnimToFaces[d.Anim]; ok && len(faces) > 0 {
 						setChanges = append(setChanges, struct {
 							x, y  int
@@ -460,9 +460,9 @@ func (p *Play) Init(game Game) (tidy func()) {
 							layer int
 						}{m.X, m.Y, play.GlobalObjectMapper.FaceToRune[faces[0]], int(d.Layer)})
 					}
-				case *messages.MessageMap2CoordDataDarkness:
+				case messages.MessageMap2CoordDataDarkness:
 					// debug.Debug("darkness: ", d)
-				case *messages.MessageMap2CoordDataImage:
+				case messages.MessageMap2CoordDataImage:
 					// debug.Debug("image: ", d)
 					t, ok := play.GlobalObjectMapper.FaceToRune[d.FaceNum]
 					if !ok {

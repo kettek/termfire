@@ -129,14 +129,14 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 
 		switch dataType {
 		case 0x0:
-			m.Data = append(m.Data, &MessageMap2CoordDataClear{})
+			m.Data = append(m.Data, MessageMap2CoordDataClear{})
 		case 0x1:
 			if dataLen != 1 {
 				return 0, fmt.Errorf("dataLen for darkness is not 1, got %d", dataLen)
 			}
 			var darkness MessageMap2CoordDataDarkness
 			darkness.Darkness = int8(data[offset])
-			m.Data = append(m.Data, &darkness)
+			m.Data = append(m.Data, darkness)
 		case 0x2: // label SC 1030
 			labelType := data[offset]
 			labelLen := data[offset+1]
@@ -185,10 +185,10 @@ func (m *MessageMapCoord) UnmarshalBinary(data []byte) (int, error) {
 						Speed:  image.AnimSpeed,
 						Smooth: image.Smooth,
 					}
-					m.Data = append(m.Data, &anim)
+					m.Data = append(m.Data, anim)
 				} else {
 					image.FaceNum = faceOrAnim
-					m.Data = append(m.Data, &image)
+					m.Data = append(m.Data, image)
 				}
 			} else {
 				return 0, fmt.Errorf("Unknown data type %d", dataType)
