@@ -306,6 +306,9 @@ type MessageDrawExtInfo struct {
 func (m *MessageDrawExtInfo) UnmarshalBinary(data []byte) error {
 	step := 0
 	start := 0
+	m.Message = ""
+	m.Type = 0
+	m.Subtype = 0
 	for i := 0; i < len(data); i++ {
 		if data[i] == ' ' {
 			switch step {
