@@ -60,6 +60,10 @@ func (m *MessageItem2) UnmarshalBinary(data []byte) error {
 		obj.AnimSpeed = int8(data[offset])
 		offset++
 		obj.Nrof = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
+		// I don't know why, but Nrof for some single-item objects is 0, so we set it to 1 if 0 here...
+		if obj.Nrof == 0 {
+			obj.Nrof = 1
+		}
 		{
 			obj.TotalWeight = obj.Weight * obj.Nrof
 		}
