@@ -119,6 +119,7 @@ type MessageDeleteItem struct {
 }
 
 func (m *MessageDeleteItem) UnmarshalBinary(data []byte) error {
+	m.Tags = nil
 	for i := 0; i < len(data); i += 4 {
 		m.Tags = append(m.Tags, int32(data[i])<<24|int32(data[i+1])<<16|int32(data[i+2])<<8|int32(data[i+3]))
 	}
