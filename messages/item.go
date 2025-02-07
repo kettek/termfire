@@ -6,9 +6,55 @@ import (
 	"strings"
 )
 
+type ItemFlags int32
+
+func (f ItemFlags) Applied() bool {
+	return int32(f)&0x000f != 0
+}
+
+func (f ItemFlags) Unidentified() bool {
+	return int32(f)&0x0010 != 0
+}
+
+func (f ItemFlags) Unpaid() bool {
+	return int32(f)&0x0200 != 0
+}
+
+func (f ItemFlags) Magic() bool {
+	return int32(f)&0x0400 != 0
+}
+
+func (f ItemFlags) Cursed() bool {
+	return int32(f)&0x0800 != 0
+}
+
+func (f ItemFlags) Damned() bool {
+	return int32(f)&0x1000 != 0
+}
+
+func (f ItemFlags) Open() bool {
+	return int32(f)&0x2000 != 0
+}
+
+func (f ItemFlags) NoPick() bool {
+	return int32(f)&0x4000 != 0
+}
+
+func (f ItemFlags) Locked() bool {
+	return int32(f)&0x8000 != 0
+}
+
+func (f ItemFlags) Blessed() bool {
+	return int32(f)&0x0100 != 0
+}
+
+func (f ItemFlags) Read() bool {
+	return int32(f)&0x0020 != 0
+}
+
 type ItemObject struct {
 	Tag         int32
-	Flags       int32
+	Flags       ItemFlags
 	Weight      int32
 	TotalWeight int32
 	Face        int32
@@ -41,7 +87,7 @@ func (m *MessageItem2) UnmarshalBinary(data []byte) error {
 		var obj ItemObject
 		obj.Tag = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		offset += 4
-		obj.Flags = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
+		obj.Flags = ItemFlags(int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3]))
 		offset += 4
 		obj.Weight = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
 		offset += 4
