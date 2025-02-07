@@ -58,6 +58,10 @@ func (t ItemType) IsSpecial() bool {
 	return t >= 1 && t <= 49
 }
 
+func (t ItemType) IsContainer() bool {
+	return t >= 50 && t <= 99
+}
+
 func (t ItemType) IsMeleeWeapon() bool {
 	return t >= 100 && t <= 149
 }
