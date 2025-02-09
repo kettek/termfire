@@ -301,7 +301,7 @@ type MessageUpdateItemNrof int32
 type MessageUpdateItem struct {
 	Flags  uint8
 	Tag    int32
-	Values []any
+	Fields []any
 }
 
 func (m *MessageUpdateItem) UnmarshalBinary(data []byte) error {
@@ -315,52 +315,52 @@ func (m *MessageUpdateItem) UnmarshalBinary(data []byte) error {
 	offset += 4
 
 	// Get our update values.
-	m.Values = make([]any, 0)
+	m.Fields = make([]any, 0)
 	if m.Flags&0x01 != 0 {
 		var v MessageUpdateItemLocation
 		v = MessageUpdateItemLocation(int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3]))
-		m.Values = append(m.Values, v)
+		m.Fields = append(m.Fields, v)
 		offset += 4
 	}
 	if m.Flags&0x02 != 0 {
 		var v MessageUpdateItemFlags
 		v = MessageUpdateItemFlags(int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3]))
-		m.Values = append(m.Values, v)
+		m.Fields = append(m.Fields, v)
 		offset += 4
 	}
 	if m.Flags&0x04 != 0 {
 		var v MessageUpdateItemWeight
 		v = MessageUpdateItemWeight(int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3]))
-		m.Values = append(m.Values, v)
+		m.Fields = append(m.Fields, v)
 		offset += 4
 	}
 	if m.Flags&0x08 != 0 {
 		var v MessageUpdateItemFace
 		v = MessageUpdateItemFace(int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3]))
-		m.Values = append(m.Values, v)
+		m.Fields = append(m.Fields, v)
 		offset += 4
 	}
 	if m.Flags&0x10 != 0 {
 		var v string
 		v, offset = readLengthPrefixedString(data, offset)
-		m.Values = append(m.Values, MessageUpdateItemName(v))
+		m.Fields = append(m.Fields, MessageUpdateItemName(v))
 	}
 	if m.Flags&0x20 != 0 {
 		var v MessageUpdateItemAnim
 		v = MessageUpdateItemAnim(int16(data[offset])<<8 | int16(data[offset+1]))
-		m.Values = append(m.Values, v)
+		m.Fields = append(m.Fields, v)
 		offset += 2
 	}
 	if m.Flags&0x40 != 0 {
 		var v MessageUpdateItemAnimSpeed
 		v = MessageUpdateItemAnimSpeed(int8(data[offset]))
-		m.Values = append(m.Values, v)
+		m.Fields = append(m.Fields, v)
 		offset++
 	}
 	if m.Flags&0x80 != 0 {
 		var v MessageUpdateItemNrof
 		v = MessageUpdateItemNrof(int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3]))
-		m.Values = append(m.Values, v)
+		m.Fields = append(m.Fields, v)
 		offset += 4
 	}
 
