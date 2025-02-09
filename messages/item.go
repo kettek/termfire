@@ -293,7 +293,10 @@ type MessageUpdateItemLocation int32
 type MessageUpdateItemFlags ItemFlags
 type MessageUpdateItemWeight int32
 type MessageUpdateItemFace int32
-type MessageUpdateItemName string
+type MessageUpdateItemName struct {
+	Name       string
+	PluralName string
+}
 type MessageUpdateItemAnim int16
 type MessageUpdateItemAnimSpeed int8
 type MessageUpdateItemNrof int32
@@ -343,7 +346,20 @@ func (m *MessageUpdateItem) UnmarshalBinary(data []byte) error {
 	if m.Flags&0x10 != 0 {
 		var v string
 		v, offset = readLengthPrefixedString(data, offset)
-		m.Fields = append(m.Fields, MessageUpdateItemName(v))
+
+		var obj MessageUpdateItemName
+		{ // SC 1024 support
+			parts := strings.Split(v, "\x00")
+			if len(parts) > 1 {
+				obj.Name = parts[0]
+				obj.PluralName = parts[1]
+			} else {
+				obj.Name = v
+				obj.PluralName = v
+			}
+		}
+
+		m.Fields = append(m.Fields, obj)
 	}
 	if m.Flags&0x20 != 0 {
 		var v MessageUpdateItemAnim
