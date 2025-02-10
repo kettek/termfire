@@ -1040,8 +1040,11 @@ func (m *MessageStats) UnmarshalBinary(data []byte) error {
 		for _, s := range gMessageStats {
 			if s.Matches(kind) {
 				// Okay, this is dumb, but we need to record the skill number for stats since they're a range.
-				if s, ok := s.(*MessageStatSkill); ok {
-					s.Skill = kind
+				if stat, ok := s.(*MessageStatSkill); ok {
+					stat.Skill = kind
+					// I regret my decisions to design termfire's decoding using "singletons" per type...
+					st := *stat
+					s = &st
 				}
 				if count, err := s.UnmarshalBinary(data[i+1:]); err != nil {
 					return err
