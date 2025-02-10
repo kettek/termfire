@@ -92,6 +92,28 @@ func (m MessageRequestInfoClassInfo) Bytes() []byte {
 	return []byte(m)
 }
 
+type MessageRequestInfoSkillInfo bool
+
+func (m MessageRequestInfoSkillInfo) Kind() string {
+	return "skill_info"
+}
+
+func (m MessageRequestInfoSkillInfo) Bytes() []byte {
+	if m {
+		return []byte("1")
+	}
+	return nil
+}
+
+type MessageRequestInfoSkillExtra int
+
+func (m MessageRequestInfoSkillExtra) Kind() string {
+	return "skill_extra"
+}
+func (m MessageRequestInfoSkillExtra) Bytes() []byte {
+	return []byte(fmt.Sprintf("%d", m))
+}
+
 type MessageRequestInfo struct {
 	Data MessageRequestInfoData
 }
@@ -252,6 +274,68 @@ type Choice struct {
 	Options     [][2]string // Name and Description pair
 }
 
+type MessageReplyInfoDataSkillInfo struct {
+	Skills map[uint16]SkillInfo
+}
+
+func (m *MessageReplyInfoDataSkillInfo) UnmarshalBinary(data []byte) error {
+	m.Skills = make(map[uint16]SkillInfo)
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if len(line) == 0 {
+			// empty signifies we doneski
+			break
+		}
+		skill := SkillInfo{}
+		parts := strings.Split(line, ":")
+		if len(parts) < 2 {
+			return fmt.Errorf("Not enough parts for skill_info")
+		}
+		statNumber, _ := strconv.Atoi(parts[0])
+		skill.Skill = uint16(statNumber)
+		skill.Name = parts[1]
+		if len(parts) > 2 {
+			face, _ := strconv.Atoi(parts[2])
+			skill.Face = int32(face)
+		}
+		m.Skills[skill.Skill] = skill
+	}
+	return nil
+}
+
+type SkillInfo struct {
+	Skill uint16
+	Name  string
+	Face  int32
+}
+
+type MessageReplyInfoDataSkillExtra struct {
+	Skills map[uint16]SkillExtraInfo
+}
+
+func (m *MessageReplyInfoDataSkillExtra) UnmarshalBinary(data []byte) error {
+	m.Skills = make(map[uint16]SkillExtraInfo)
+	for i := 0; i < len(data); i++ {
+		skillNumber := uint16(data[i]) | uint16(data[i+1])<<8
+		if skillNumber == 0 {
+			// End of data.
+			break
+		}
+		skill := SkillExtraInfo{
+			Skill: skillNumber,
+		}
+		i += 2
+		skill.Description, i = readLengthPrefixedString2(data, i)
+		m.Skills[skillNumber] = skill
+	}
+	return nil
+}
+
+type SkillExtraInfo struct {
+	Skill       uint16
+	Description string
+}
+
 type MessageReplyInfo struct {
 	Data MessageReplyInfoData
 }
@@ -343,6 +427,20 @@ func (m *MessageReplyInfo) UnmarshalBinary(data []byte) error {
 			return err
 		}
 		m.Data = MessageReplyInfoDataClassInfo(msg)
+	case "skill_info":
+		msg := MessageReplyInfoDataSkillInfo{}
+		err := msg.UnmarshalBinary(data)
+		if err != nil {
+			return err
+		}
+		m.Data = MessageReplyInfoDataSkillInfo(msg)
+	case "skill_extra":
+		msg := MessageReplyInfoDataSkillExtra{}
+		err := msg.UnmarshalBinary(data)
+		if err != nil {
+			return err
+		}
+		m.Data = MessageReplyInfoDataSkillExtra(msg)
 	}
 	return nil
 }
