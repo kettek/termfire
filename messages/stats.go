@@ -856,6 +856,7 @@ func (m MessageStatResistBlind) Matches(id byte) bool {
 }
 
 type MessageStatSkill struct {
+	Skill uint8
 	Level int8
 	Exp   int64
 }
@@ -1038,6 +1039,10 @@ func (m *MessageStats) UnmarshalBinary(data []byte) error {
 		match := false
 		for _, s := range gMessageStats {
 			if s.Matches(kind) {
+				// Okay, this is dumb, but we need to record the skill number for stats since they're a range.
+				if s, ok := s.(*MessageStatSkill); ok {
+					s.Skill = kind
+				}
 				if count, err := s.UnmarshalBinary(data[i+1:]); err != nil {
 					return err
 				} else {
