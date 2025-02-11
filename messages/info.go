@@ -326,7 +326,7 @@ type MessageReplyInfoDataSkillExtra struct {
 func (m *MessageReplyInfoDataSkillExtra) UnmarshalBinary(data []byte) error {
 	m.Skills = make(map[uint16]SkillExtraInfo)
 	for i := 0; i < len(data); {
-		skillNumber := uint16(data[i]) | uint16(data[i+1])<<8
+		skillNumber := uint16(data[i])<<8 | uint16(data[i+1])
 		if skillNumber == 0 {
 			// End of data.
 			break
