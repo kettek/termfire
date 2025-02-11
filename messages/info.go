@@ -114,6 +114,16 @@ func (m MessageRequestInfoSkillExtra) Bytes() []byte {
 	return []byte(fmt.Sprintf("%d", m))
 }
 
+type MessageRequestInfoExpTable struct{}
+
+func (m MessageRequestInfoExpTable) Kind() string {
+	return "exp_table"
+}
+
+func (m MessageRequestInfoExpTable) Bytes() []byte {
+	return nil
+}
+
 type MessageRequestInfo struct {
 	Data MessageRequestInfoData
 }
@@ -336,6 +346,26 @@ type SkillExtraInfo struct {
 	Description string
 }
 
+type MessageReplyInfoDataExpTable []uint64
+
+func (m MessageReplyInfoDataExpTable) Kind() string {
+	return "exp_table"
+}
+
+func (m *MessageReplyInfoDataExpTable) UnmarshalBinary(data []byte) error {
+	*m = nil
+	count := uint16(data[0]) | uint16(data[1])<<8
+	for i := 0; i < int(count); i++ {
+		if i*8+2 >= len(data) {
+			return fmt.Errorf("Not enough data for exp_table")
+		}
+		// uint64
+		entry := uint64(data[i*8+2]) | uint64(data[i*8+3])<<8 | uint64(data[i*8+4])<<16 | uint64(data[i*8+5])<<24 | uint64(data[i*8+6])<<32 | uint64(data[i*8+7])<<40 | uint64(data[i*8+8])<<48 | uint64(data[i*8+9])<<56
+		*m = append(*m, entry)
+	}
+	return nil
+}
+
 type MessageReplyInfo struct {
 	Data MessageReplyInfoData
 }
@@ -441,6 +471,13 @@ func (m *MessageReplyInfo) UnmarshalBinary(data []byte) error {
 			return err
 		}
 		m.Data = MessageReplyInfoDataSkillExtra(msg)
+	case "exp_table":
+		msg := MessageReplyInfoDataExpTable{}
+		err := msg.UnmarshalBinary(data)
+		if err != nil {
+			return err
+		}
+		m.Data = MessageReplyInfoDataExpTable(msg)
 	}
 	return nil
 }
