@@ -355,12 +355,14 @@ func (m MessageReplyInfoDataExpTable) Kind() string {
 func (m *MessageReplyInfoDataExpTable) UnmarshalBinary(data []byte) error {
 	*m = nil
 	count := uint16(data[0]) | uint16(data[1])<<8
+	data = data[2:]
 	for i := 0; i < int(count)-1; i++ {
-		if i*8+2 >= len(data) {
+		pos := i * 8
+		if pos+7 >= len(data) {
 			return fmt.Errorf("Not enough data for exp_table")
 		}
 		// uint64
-		entry := uint64(data[i*8+2]) | uint64(data[i*8+3])<<8 | uint64(data[i*8+4])<<16 | uint64(data[i*8+5])<<24 | uint64(data[i*8+6])<<32 | uint64(data[i*8+7])<<40 | uint64(data[i*8+8])<<48 | uint64(data[i*8+9])<<56
+		entry := uint64(data[pos]) | uint64(data[pos+1])<<8 | uint64(data[pos+2])<<16 | uint64(data[pos+3])<<24 | uint64(data[pos+4])<<32 | uint64(data[pos+5])<<40 | uint64(data[pos+6])<<48 | uint64(data[pos+7])<<56
 		*m = append(*m, entry)
 	}
 	return nil
