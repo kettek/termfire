@@ -355,7 +355,7 @@ func (m MessageReplyInfoDataExpTable) Kind() string {
 func (m *MessageReplyInfoDataExpTable) UnmarshalBinary(data []byte) error {
 	*m = nil
 	count := uint16(data[0]) | uint16(data[1])<<8
-	for i := 0; i < int(count); i++ {
+	for i := 0; i < int(count)-1; i++ {
 		if i*8+2 >= len(data) {
 			return fmt.Errorf("Not enough data for exp_table")
 		}
