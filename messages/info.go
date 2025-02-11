@@ -362,7 +362,7 @@ func (m *MessageReplyInfoDataExpTable) UnmarshalBinary(data []byte) error {
 			return fmt.Errorf("Not enough data for exp_table")
 		}
 		// uint64
-		entry := uint64(data[pos]) | uint64(data[pos+1])<<8 | uint64(data[pos+2])<<16 | uint64(data[pos+3])<<24 | uint64(data[pos+4])<<32 | uint64(data[pos+5])<<40 | uint64(data[pos+6])<<48 | uint64(data[pos+7])<<56
+		entry := uint64(data[pos])<<54 | uint64(data[pos+1])<<48 | uint64(data[pos+2])<<40 | uint64(data[pos+3])<<32 | uint64(data[pos+4])<<24 | uint64(data[pos+5])<<16 | uint64(data[pos+6])<<8 | uint64(data[pos+7])
 		*m = append(*m, entry)
 	}
 	return nil
