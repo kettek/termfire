@@ -354,7 +354,7 @@ func (m MessageReplyInfoDataExpTable) Kind() string {
 
 func (m *MessageReplyInfoDataExpTable) UnmarshalBinary(data []byte) error {
 	*m = nil
-	count := uint16(data[0]) | uint16(data[1])<<8
+	count := uint16(data[0])<<8 | uint16(data[1])
 	data = data[2:]
 	for i := 0; i < int(count)-1; i++ {
 		pos := i * 8
