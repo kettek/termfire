@@ -1,6 +1,6 @@
 package messages
 
-type handler struct {
+type Handler struct {
 	kind        string
 	failureKind string
 	once        bool
@@ -8,7 +8,7 @@ type handler struct {
 }
 
 type MessageHandler struct {
-	handlers []*handler
+	handlers []*Handler
 }
 
 func (b *MessageHandler) OnMessage(m Message) {
@@ -16,7 +16,7 @@ func (b *MessageHandler) OnMessage(m Message) {
 
 	var failureMessage *MessageFailure
 
-	handlers := make([]*handler, 0)
+	handlers := make([]*Handler, 0)
 	// If it's a failure message, see if the failure kind exists in our handlers.
 	if fail, ok := m.(*MessageFailure); ok {
 		failureMessage = fail
@@ -53,27 +53,27 @@ func (b *MessageHandler) Clear() {
 	b.handlers = nil
 }
 
-func (b *MessageHandler) On(m Message, f Message, fn func(Message, *MessageFailure)) *handler {
+func (b *MessageHandler) On(m Message, f Message, fn func(Message, *MessageFailure)) *Handler {
 	fKind := ""
 	if f != nil {
 		fKind = f.Kind()
 	}
-	handler := handler{m.Kind(), fKind, false, fn}
+	handler := Handler{m.Kind(), fKind, false, fn}
 	b.handlers = append(b.handlers, &handler)
 	return &handler
 }
 
-func (b *MessageHandler) Once(m Message, f Message, fn func(Message, *MessageFailure)) *handler {
+func (b *MessageHandler) Once(m Message, f Message, fn func(Message, *MessageFailure)) *Handler {
 	fKind := ""
 	if f != nil {
 		fKind = f.Kind()
 	}
-	handler := handler{m.Kind(), fKind, true, fn}
+	handler := Handler{m.Kind(), fKind, true, fn}
 	b.handlers = append(b.handlers, &handler)
 	return &handler
 }
 
-func (b *MessageHandler) Off(h *handler) {
+func (b *MessageHandler) Off(h *Handler) {
 	for i, handler := range b.handlers {
 		if handler == h {
 			b.handlers = append(b.handlers[:i], b.handlers[i+1:]...)
