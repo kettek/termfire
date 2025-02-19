@@ -119,18 +119,17 @@ func (m *MessageUpdateSpell) UnmarshalBinary(data []byte) error {
 	offset += 4
 
 	m.Fields = make([]any, 0)
-	for offset < len(data) {
-		switch m.Flags {
-		case 0x01:
-			m.Fields = append(m.Fields, MessageUpdateSpellMana(int16(data[offset])<<8|int16(data[offset+1])))
-			offset += 2
-		case 0x02:
-			m.Fields = append(m.Fields, MessageUpdateSpellGrace(int16(data[offset])<<8|int16(data[offset+1])))
-			offset += 2
-		case 0x04:
-			m.Fields = append(m.Fields, MessageUpdateSpellDamage(int16(data[offset])<<8|int16(data[offset+1])))
-			offset += 2
-		}
+	if m.Flags.Mana() {
+		m.Fields = append(m.Fields, MessageUpdateSpellMana(int16(data[offset])<<8|int16(data[offset+1]))
+		offset += 2
+	}
+	if m.Flags.Grace() {
+		m.Fields = append(m.Fields, MessageUpdateSpellGrace(int16(data[offset])<<8|int16(data[offset+1]))
+		offset += 2
+	}
+	if m.Flags.Damage() {
+		m.Fields = append(m.Fields, MessageUpdateSpellDamage(int16(data[offset])<<8|int16(data[offset+1]))
+		offset += 2
 	}
 	return nil
 }
