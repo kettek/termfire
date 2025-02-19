@@ -304,33 +304,33 @@ func (m MessageStatExp64) Matches(id byte) bool {
 	return id == 28
 }
 
-type MessageStatSpellAttune int16
+type MessageStatSpellAttune int32
 
 func (m *MessageStatSpellAttune) UnmarshalBinary(data []byte) (int, error) {
-	*m = (MessageStatSpellAttune)(int16(data[0])<<8 | int16(data[1]))
-	return 2, nil
+	*m = (MessageStatSpellAttune)(int32(data[0])<<24 | int32(data[1])<<16 | int32(data[2])<<8 | int32(data[3]))
+	return 4, nil
 }
 
 func (m MessageStatSpellAttune) Matches(id byte) bool {
 	return id == 29
 }
 
-type MessageStatSpellRepel int16
+type MessageStatSpellRepel int32
 
 func (m *MessageStatSpellRepel) UnmarshalBinary(data []byte) (int, error) {
-	*m = (MessageStatSpellRepel)(int16(data[0])<<8 | int16(data[1]))
-	return 2, nil
+	*m = (MessageStatSpellRepel)(int32(data[0])<<24 | int32(data[1])<<16 | int32(data[2])<<8 | int32(data[3]))
+	return 4, nil
 }
 
 func (m MessageStatSpellRepel) Matches(id byte) bool {
 	return id == 30
 }
 
-type MessageStatSpellDeny int16
+type MessageStatSpellDeny int32
 
 func (m *MessageStatSpellDeny) UnmarshalBinary(data []byte) (int, error) {
-	*m = (MessageStatSpellDeny)(int16(data[0])<<8 | int16(data[1]))
-	return 2, nil
+	*m = (MessageStatSpellDeny)(int32(data[0])<<24 | int32(data[1])<<16 | int32(data[2])<<8 | int32(data[3]))
+	return 4, nil
 }
 
 func (m MessageStatSpellDeny) Matches(id byte) bool {
@@ -1036,10 +1036,6 @@ func (m *MessageStats) UnmarshalBinary(data []byte) error {
 	m.Stats = make([]MessageStat, 0)
 	for i := 0; i < len(data); {
 		kind := data[i]
-		if kind == 0 {
-			// Done if 0.
-			break
-		}
 		match := false
 		for _, s := range gMessageStats {
 			if s.Matches(kind) {
@@ -1061,7 +1057,7 @@ func (m *MessageStats) UnmarshalBinary(data []byte) error {
 			}
 		}
 		if !match {
-			return fmt.Errorf("Unknown stat %d", kind)
+			return fmt.Errorf("unknown stat %d", kind)
 		}
 		i++
 	}
