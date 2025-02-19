@@ -9,7 +9,7 @@ const (
 	SpellRequiresFreeformString SpellUsage = 3
 )
 
-type MessageAddSpell struct {
+type Spell struct {
 	Tag         int32
 	Level       int16
 	CastingTime int16
@@ -26,42 +26,50 @@ type MessageAddSpell struct {
 	Requirements string
 }
 
+type MessageAddSpell struct {
+	Spells []Spell
+}
+
 func (m MessageAddSpell) Bytes() []byte {
 	return nil
 }
 
 func (m *MessageAddSpell) UnmarshalBinary(data []byte) error {
 	offset := 0
-	m.Tag = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
-	offset += 4
-	m.Level = int16(data[offset])<<8 | int16(data[offset+1])
-	offset += 2
-	m.CastingTime = int16(data[offset])<<8 | int16(data[offset+1])
-	offset += 2
-	m.Mana = int16(data[offset])<<8 | int16(data[offset+1])
-	offset += 2
-	m.Grace = int16(data[offset])<<8 | int16(data[offset+1])
-	offset += 2
-	m.Damage = int16(data[offset])<<8 | int16(data[offset+1])
-	offset += 2
-	m.Skill = uint8(data[offset])
-	offset++
-	m.Path = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
-	offset += 4
-	m.Face = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
-	offset += 4
-	name, length := readLengthPrefixedString(data, offset)
-	m.Name = name
-	offset = length
-	description, length := readLengthPrefixedString2(data, offset)
-	m.Description = description
-	offset = length
-	if offset < len(data) {
-		m.Usage = SpellUsage(data[offset])
+	m.Spells = make([]Spell, 0)
+	for offset < len(data) {
+		spell := Spell{}
+		spell.Tag = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
+		offset += 4
+		spell.Level = int16(data[offset])<<8 | int16(data[offset+1])
+		offset += 2
+		spell.CastingTime = int16(data[offset])<<8 | int16(data[offset+1])
+		offset += 2
+		spell.Mana = int16(data[offset])<<8 | int16(data[offset+1])
+		offset += 2
+		spell.Grace = int16(data[offset])<<8 | int16(data[offset+1])
+		offset += 2
+		spell.Damage = int16(data[offset])<<8 | int16(data[offset+1])
+		offset += 2
+		spell.Skill = uint8(data[offset])
+		offset++
+		spell.Path = uint32(data[offset])<<24 | uint32(data[offset+1])<<16 | uint32(data[offset+2])<<8 | uint32(data[offset+3])
+		offset += 4
+		spell.Face = int32(data[offset])<<24 | int32(data[offset+1])<<16 | int32(data[offset+2])<<8 | int32(data[offset+3])
+		offset += 4
+		name, length := readLengthPrefixedString(data, offset)
+		spell.Name = name
+		offset = length
+		description, length := readLengthPrefixedString2(data, offset)
+		spell.Description = description
+		offset = length
+		// FIXME: We need unmarshalling to have some setup! For now we're assuming spellmon 2
+		spell.Usage = SpellUsage(data[offset])
 		offset++
 		requirements, length := readLengthPrefixedString(data, offset)
-		m.Requirements = requirements
+		spell.Requirements = requirements
 		offset = length
+		m.Spells = append(m.Spells, spell)
 	}
 	return nil
 }
