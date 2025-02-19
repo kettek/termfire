@@ -1036,6 +1036,10 @@ func (m *MessageStats) UnmarshalBinary(data []byte) error {
 	m.Stats = make([]MessageStat, 0)
 	for i := 0; i < len(data); {
 		kind := data[i]
+		if kind == 0 {
+			// Done if 0.
+			break
+		}
 		match := false
 		for _, s := range gMessageStats {
 			if s.Matches(kind) {
