@@ -134,6 +134,10 @@ type MessageSetup struct {
 		Use   bool
 		Value uint8 // 0, 1, 2
 	}
+	Tick struct {
+		Use   bool
+		Value uint8 // 0, 1
+	}
 }
 
 func (m *MessageSetup) UnmarshalBinary(data []byte) error {
@@ -164,6 +168,10 @@ func (m *MessageSetup) UnmarshalBinary(data []byte) error {
 			m.SpellMon.Use = true
 			v, _ := strconv.ParseUint(parts[i+1], 10, 8)
 			m.SpellMon.Value = uint8(v)
+		case "tick":
+			m.Tick.Use = true
+			v, _ := strconv.ParseUint(parts[i+1], 10, 8)
+			m.Tick.Value = uint8(v)
 		}
 	}
 	return nil
@@ -221,6 +229,12 @@ func (m MessageSetup) Bytes() []byte {
 		result = append(result, []byte("spellmon")...)
 		result = append(result, ' ')
 		result = append(result, []byte(strconv.Itoa(int(m.SpellMon.Value)))...)
+	}
+	if m.Tick.Use {
+		result = append(result, ' ')
+		result = append(result, []byte("tick")...)
+		result = append(result, ' ')
+		result = append(result, []byte(strconv.Itoa(int(m.Tick.Value)))...)
 	}
 	debug.Debug("Bytes:", string(result))
 	return result
